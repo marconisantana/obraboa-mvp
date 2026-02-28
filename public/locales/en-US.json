@@ -8,6 +8,8 @@
     "projects": "Projects",
     "schedule": "Schedule",
     "documents": "Documents",
+    "tools": "Tools",
+    "pending": "Pending",
     "profile": "Profile"
   },
   "auth": {
