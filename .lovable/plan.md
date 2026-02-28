@@ -1,179 +1,143 @@
 
 
-## Modulo Organizador de Documentos
+## Calculadora de Rendimentos - Aba Ferramentas
 
 ### Resumo
 
-Criar um organizador de documentos com layout estilo Dropbox: navegacao por pastas com breadcrumb, upload de arquivos, preview inline, compartilhamento de links e gestao de pastas/arquivos.
+Transformar a tela de Ferramentas (atualmente placeholder "Em breve") em uma calculadora de rendimentos de materiais de construcao. Tela 100% frontend, sem banco de dados, com selecao de material e calculos baseados em formulas padrao ABNT.
 
 ---
 
-### 1. Banco de dados
+### 1. Estrutura da tela
 
-**Tabela `document_folders`:**
+A `ToolsPage` sera reescrita com:
 
-| Coluna | Tipo | Default | Nullable |
-|---|---|---|---|
-| id | uuid | gen_random_uuid() | No |
-| project_id | uuid | FK -> projects.id CASCADE | No |
-| parent_id | uuid | FK -> document_folders.id CASCADE | Yes (null = raiz) |
-| name | text | - | No |
-| created_at | timestamptz | now() | No |
-| user_id | uuid | auth.uid() | No |
-
-**Tabela `document_files`:**
-
-| Coluna | Tipo | Default | Nullable |
-|---|---|---|---|
-| id | uuid | gen_random_uuid() | No |
-| project_id | uuid | FK -> projects.id CASCADE | No |
-| folder_id | uuid | FK -> document_folders.id SET NULL | Yes (null = raiz) |
-| name | text | - | No |
-| storage_path | text | - | No |
-| file_type | text | - | No |
-| file_size | bigint | 0 | No |
-| uploaded_by | uuid | auth.uid() | No |
-| created_at | timestamptz | now() | No |
-
-**Storage bucket**: `project-documents` (public).
-
-**RLS**: Policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = <table>.project_id AND projects.owner_id = auth.uid())` para ambas as tabelas. CRUD completo (SELECT, INSERT, UPDATE, DELETE).
-
-**Pastas padrao**: Ao criar um projeto (ou ao acessar documents pela primeira vez), criar automaticamente 4 pastas raiz: "Projetos", "Contratos", "Fotos", "Outros". Isso sera feito no frontend (verificar se existem pastas, se nao criar as 4).
+1. **Header** com titulo "Ferramentas" e subtitulo "Calculadora de Rendimentos"
+2. **Grid de selecao de material** (6 cards com icone visual):
+   - Ceramica/Porcelanato (Grid3x3)
+   - Argamassa (Layers)
+   - Rejunte (SquareDashed ou similar)
+   - Tinta (Paintbrush)
+   - Cimento (Package)
+   - Massa corrida (PaintRoller)
+3. **Formulario dinamico** que muda conforme o material selecionado
+4. **Area de resultado** com calculo e sugestao de compra
+5. **Botao "Nova Calculadora"** para reiniciar
 
 ---
 
-### 2. Traducoes (i18n)
+### 2. Inputs por material
 
-Novas chaves em `pt-BR.json` e `en-US.json`:
+**Ceramica/Porcelanato:**
+- Area (m2) - input numerico
+- Perda (%) - input numerico, padrao 10
+- Tamanho da peca - select: 30x30, 45x45, 60x60, 80x80, 20x20 cm
+
+**Argamassa:**
+- Area (m2)
+- Tipo - select: AC-I, AC-II, AC-III
+
+**Rejunte:**
+- Area (m2)
+- Largura da junta (mm) - input numerico, padrao 3
+
+**Tinta:**
+- Area (m2)
+- Numero de demaos - select: 1, 2, 3
+- Tipo de tinta - select: Latex, Textura, Esmalte
+
+**Cimento:**
+- Volume (m3)
+- Traco - select: 1:2:3, 1:3:4, 1:2:4
+
+**Massa corrida:**
+- Area (m2)
+- Numero de demaos - select: 1, 2, 3
+
+---
+
+### 3. Formulas de rendimento
+
+Todas baseadas em referencias padrao ABNT / mercado:
+
+- **Ceramica**: `pecas = (area * (1 + perda/100)) / areaPeca`. Resultado em m2 de piso + quantidade de caixas (arredondado para cima).
+- **Argamassa**: Rendimento medio por m2 conforme tipo (AC-I: ~5kg/m2, AC-II: ~5.5kg/m2, AC-III: ~5.5kg/m2). Resultado em kg, convertido para sacos de 20kg.
+- **Rejunte**: Formula baseada em area, largura da junta e espessura da peca. Rendimento medio ~0.5-1kg/m2. Resultado em kg, convertido para sacos de 1kg ou 5kg.
+- **Tinta**: Rendimento medio por tipo (Latex: ~10m2/L, Textura: ~4m2/kg, Esmalte: ~8m2/L). Multiplicar por demaos. Resultado em litros ou kg, convertido para latas de 18L ou galoes de 3.6L.
+- **Cimento**: Baseado no traco. Traco 1:2:3 = ~7 sacos de 50kg por m3 de concreto. Resultado em sacos de 50kg.
+- **Massa corrida**: Rendimento medio ~5m2/L por demao. Resultado em litros, convertido para latas de 18L.
+
+Margem de seguranca sugerida: +10% sobre o calculado.
+
+---
+
+### 4. Output
+
+Card de resultado com:
+- Quantidade calculada (ex: "150 kg de argamassa AC-II")
+- Quantidade sugerida para compra com margem (ex: "~8 sacos de 20kg")
+- Unidade de medida claramente indicada
+- Alerta em tom informativo: "Verifique sempre o rendimento indicado na embalagem do fabricante"
+
+---
+
+### 5. Traducoes (i18n)
+
+Novas chaves `tools` em `pt-BR.json` e `en-US.json`:
 
 ```text
-"documents": {
-  "title": "Documentos",
-  "newFolder": "Nova pasta",
-  "uploadFiles": "Enviar arquivos",
-  "folderName": "Nome da pasta",
-  "rename": "Renomear",
-  "delete": "Excluir",
-  "deleteConfirm": "Tem certeza que deseja excluir?",
-  "deleteFolderWarning": "Todos os arquivos dentro desta pasta serao excluidos.",
-  "download": "Baixar",
-  "copyLink": "Copiar link",
-  "linkCopied": "Link copiado!",
-  "preview": "Visualizar",
-  "noFiles": "Nenhum arquivo neste diretorio",
-  "noFilesDesc": "Envie arquivos ou crie pastas para organizar seus documentos",
-  "size": "Tamanho",
-  "uploadedAt": "Enviado em",
-  "uploadedBy": "Enviado por",
-  "selectProject": "Selecione um projeto para ver os documentos",
-  "rootFolder": "Documentos",
-  "defaultFolderProjects": "Projetos",
-  "defaultFolderContracts": "Contratos",
-  "defaultFolderPhotos": "Fotos",
-  "defaultFolderOthers": "Outros",
-  "renamePlaceholder": "Novo nome",
-  "uploading": "Enviando..."
+"tools": {
+  "title": "Ferramentas",
+  "yieldCalculator": "Calculadora de Rendimentos",
+  "selectMaterial": "Selecione o material",
+  "ceramic": "Ceramica/Porcelanato",
+  "mortar": "Argamassa",
+  "grout": "Rejunte",
+  "paint": "Tinta",
+  "cement": "Cimento",
+  "putty": "Massa corrida",
+  "area": "Area (m2)",
+  "volume": "Volume (m3)",
+  "wastePct": "Perda (%)",
+  "tileSize": "Tamanho da peca",
+  "mortarType": "Tipo de argamassa",
+  "jointWidth": "Largura da junta (mm)",
+  "coats": "Numero de demaos",
+  "paintType": "Tipo de tinta",
+  "mixRatio": "Traco",
+  "calculate": "Calcular",
+  "result": "Resultado",
+  "calculatedQty": "Quantidade calculada",
+  "suggestedPurchase": "Sugestao de compra",
+  "unit": "Unidade",
+  "newCalculation": "Nova Calculadora",
+  "disclaimer": "Verifique sempre o rendimento indicado na embalagem do fabricante",
+  "bags": "sacos",
+  "liters": "litros",
+  "cans": "latas",
+  "sqMeters": "m2",
+  "latex": "Latex",
+  "texture": "Textura",
+  "enamel": "Esmalte",
+  "safetyMargin": "inclui margem de 10%"
 }
 ```
 
 ---
 
-### 3. Hook `useDocuments`
-
-Criar `src/hooks/useDocuments.ts`:
-
-- `fetchFolders(projectId, parentId)`: lista pastas filhas de um diretorio
-- `fetchFiles(projectId, folderId)`: lista arquivos de um diretorio
-- `ensureDefaultFolders(projectId)`: cria as 4 pastas padrao se nao existirem
-- `createFolder(projectId, parentId, name)`
-- `renameFolder(folderId, newName)`, `deleteFolder(folderId)` (deleta recursivamente)
-- `uploadFiles(projectId, folderId, files[])`: upload para bucket + insert no banco
-- `renameFile(fileId, newName)`, `deleteFile(fileId)` (remove do storage + banco)
-- `getFilePublicUrl(storagePath)`: URL publica
-- `getTemporaryLink(storagePath)`: URL assinada temporaria para compartilhamento
-- `fetchBreadcrumb(folderId)`: consulta recursiva para montar o caminho de pastas
-
----
-
-### 4. Componentes
-
-**`src/components/documents/DocumentBreadcrumb.tsx`:**
-- Breadcrumb com links clicaveis: "Documentos > Contratos > Subpasta"
-- Usa o componente Breadcrumb do shadcn/ui ja existente
-- Click em cada nivel navega para aquela pasta
-
-**`src/components/documents/FolderCard.tsx`:**
-- Icone de pasta, nome, data de criacao
-- Click abre a pasta (navega)
-- Menu de contexto: renomear, excluir
-
-**`src/components/documents/FileRow.tsx`:**
-- Icone por tipo (PDF, imagem, planilha, DWG, generico)
-- Nome, tamanho formatado (KB/MB), data de upload, nome de quem enviou
-- Acoes: preview, download, copiar link, renomear, excluir
-
-**`src/components/documents/FilePreviewDialog.tsx`:**
-- Modal para preview inline
-- Imagens: renderiza `<img>` direto
-- PDFs: renderiza em `<iframe>` com URL publica
-- Outros tipos: mostra icone grande + informacoes + botao de download
-
-**`src/components/documents/CreateFolderDialog.tsx`:**
-- Dialog simples com input de nome + botao criar
-
-**`src/components/documents/RenameDialog.tsx`:**
-- Dialog com input preenchido com nome atual + botao salvar
-
----
-
-### 5. Pagina DocumentsPage
-
-Reescrever `src/pages/DocumentsPage.tsx`:
-
-- Sem projeto ativo: mensagem pedindo selecionar
-- State local: `currentFolderId` (null = raiz)
-- Breadcrumb no topo
-- Secao de pastas (grid de cards)
-- Secao de arquivos (lista/tabela com icone, nome, tamanho, data, autor)
-- Botoes no topo: "+ Nova pasta" e "Enviar arquivos"
-- Input de upload: accept=".pdf,.jpeg,.jpg,.png,.xlsx,.xls,.dwg" multiple
-- Ao entrar na primeira vez, chama `ensureDefaultFolders`
-
----
-
-### 6. Roteamento
-
-A rota `/documents` ja existe no `App.tsx`. Nao precisa de rota nova. A navegacao de pastas sera feita via state local (nao via URL), mantendo simples.
-
-Atualizar `ProjectDetailPage`: adicionar "Documentos" como modulo no grid de atalhos, navegando para `/documents`.
-
----
-
 ### Detalhes Tecnicos
 
-- **Upload**: Bucket `project-documents`, path `{project_id}/{folder_id || 'root'}/{uuid}_{filename}`. Upload via `supabase.storage.from('project-documents').upload()`.
-- **Icone por tipo**: Mapeamento simples: `.pdf` -> FileText vermelho, `.jpg/.jpeg/.png` -> Image azul, `.xlsx/.xls` -> Table verde, `.dwg` -> Ruler laranja, outros -> File cinza.
-- **Tamanho formatado**: Funcao utilitaria `formatFileSize(bytes)` que retorna "1.2 MB", "340 KB", etc.
-- **Link temporario**: `supabase.storage.from('project-documents').createSignedUrl(path, 3600)` gera URL valida por 1h. Copiar para clipboard via `navigator.clipboard.writeText()`.
-- **Download**: Usa a URL publica com atributo `download` ou `window.open()`.
-- **Breadcrumb recursivo**: Query que busca a pasta atual e seus pais iterativamente ate `parent_id = null`.
-- **Delete folder**: Deleta todos os arquivos da pasta (e subpastas) do storage primeiro, depois deleta os registros do banco. O CASCADE no FK cuida das subpastas.
-- **Pastas padrao**: No `useEffect` do DocumentsPage, verifica se existem pastas raiz. Se nao, cria as 4 com um batch insert.
+- **Sem banco de dados**: Tudo no frontend, sem persistencia. State local com `useState`.
+- **Componente unico**: Criar `src/components/tools/YieldCalculator.tsx` com toda a logica de calculo e formulario.
+- **ToolsPage.tsx**: Reescrever para renderizar o `YieldCalculator`.
+- **Formulas**: Objeto de configuracao com rendimentos por material e tipo, facilitando manutencao.
+- **Formatacao**: Numeros com `toFixed(1)` ou `Math.ceil` para quantidades inteiras (sacos, latas).
+- **Responsividade**: Grid de materiais 2x3 em mobile, 3x2 em desktop.
 
 ### Arquivos a criar
-- Migracao SQL (2 tabelas + bucket + RLS)
-- `src/hooks/useDocuments.ts`
-- `src/components/documents/DocumentBreadcrumb.tsx`
-- `src/components/documents/FolderCard.tsx`
-- `src/components/documents/FileRow.tsx`
-- `src/components/documents/FilePreviewDialog.tsx`
-- `src/components/documents/CreateFolderDialog.tsx`
-- `src/components/documents/RenameDialog.tsx`
+- `src/components/tools/YieldCalculator.tsx`
 
 ### Arquivos a modificar
-- `src/pages/DocumentsPage.tsx` (reescrever completamente)
-- `src/pages/ProjectDetailPage.tsx` (adicionar atalho "Documentos")
-- `public/locales/pt-BR.json` (novas chaves documents)
-- `public/locales/en-US.json` (novas chaves documents)
-
+- `src/pages/ToolsPage.tsx` (renderizar YieldCalculator)
+- `public/locales/pt-BR.json` (novas chaves tools)
+- `public/locales/en-US.json` (novas chaves tools)
