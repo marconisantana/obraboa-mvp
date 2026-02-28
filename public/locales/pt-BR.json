@@ -61,7 +61,14 @@
     "delete": "Excluir",
     "confirmDelete": "Tem certeza que deseja excluir este projeto?",
     "members": "Membros",
-    "active": "Ativa"
+    "active": "Ativa",
+    "type": "Tipo",
+    "coverImage": "Foto de capa",
+    "createProject": "Criar Obra",
+    "residencial": "Residencial",
+    "comercial": "Comercial",
+    "reforma": "Reforma",
+    "flip": "Flip"
   },
   "profile": {
     "title": "Meu Perfil",

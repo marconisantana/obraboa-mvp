@@ -418,6 +418,7 @@ export type Database = {
       projects: {
         Row: {
           address: string | null
+          cover_image_url: string | null
           created_at: string
           end_date: string | null
           id: string
@@ -425,10 +426,12 @@ export type Database = {
           owner_id: string
           start_date: string | null
           status: string
+          type: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          cover_image_url?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
@@ -436,10 +439,12 @@ export type Database = {
           owner_id: string
           start_date?: string | null
           status?: string
+          type?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          cover_image_url?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
@@ -447,6 +452,7 @@ export type Database = {
           owner_id?: string
           start_date?: string | null
           status?: string
+          type?: string | null
           updated_at?: string
         }
         Relationships: []
