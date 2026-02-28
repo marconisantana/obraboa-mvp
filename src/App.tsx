@@ -16,6 +16,8 @@ import HomePage from "@/pages/HomePage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import SchedulePage from "@/pages/SchedulePage";
+import RdoPage from "@/pages/RdoPage";
+import RdoDetail from "@/components/rdo/RdoDetail";
 import DocumentsPage from "@/pages/DocumentsPage";
 import ToolsPage from "@/pages/ToolsPage";
 import PendingPage from "@/pages/PendingPage";
@@ -48,6 +50,8 @@ const App = () => (
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
                 <Route path="/schedule" element={<SchedulePage />} />
+                <Route path="/rdo" element={<RdoPage />} />
+                <Route path="/rdo/:id" element={<RdoDetail />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/tools" element={<ToolsPage />} />
                 <Route path="/pending" element={<PendingPage />} />

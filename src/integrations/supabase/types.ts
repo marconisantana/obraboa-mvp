@@ -115,6 +115,114 @@ export type Database = {
         }
         Relationships: []
       }
+      rdo_photos: {
+        Row: {
+          annotations_json: Json | null
+          caption: string | null
+          id: string
+          rdo_id: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          annotations_json?: Json | null
+          caption?: string | null
+          id?: string
+          rdo_id: string
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          annotations_json?: Json | null
+          caption?: string | null
+          id?: string
+          rdo_id?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rdo_photos_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "rdos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rdo_team_members: {
+        Row: {
+          hours_worked: number
+          id: string
+          name: string
+          rdo_id: string
+          role: string | null
+        }
+        Insert: {
+          hours_worked?: number
+          id?: string
+          name: string
+          rdo_id: string
+          role?: string | null
+        }
+        Update: {
+          hours_worked?: number
+          id?: string
+          name?: string
+          rdo_id?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rdo_team_members_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "rdos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rdos: {
+        Row: {
+          activities: string | null
+          created_at: string
+          date: string
+          id: string
+          observations: string | null
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activities?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          observations?: string | null
+          project_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          activities?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          observations?: string | null
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rdos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stages: {
         Row: {
           created_at: string

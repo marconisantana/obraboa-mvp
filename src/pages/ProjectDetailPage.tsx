@@ -145,6 +145,8 @@ export default function ProjectDetailPage() {
             onClick={() => {
               if (key === 'schedule') {
                 navigate('/schedule');
+              } else if (key === 'rdo') {
+                navigate('/rdo');
               } else {
                 toast({ title: t('common.comingSoon') });
               }
