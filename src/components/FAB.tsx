@@ -3,18 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Plus, FileText, CalendarDays, CheckSquare, ShoppingCart, FolderKanban } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useToast } from '@/hooks/use-toast';
-import { useAppStore } from '@/stores/useAppStore';
 import CreateProjectModal from '@/components/profile/CreateProjectModal';
-import PlanGateDrawer from '@/components/profile/PlanGateDrawer';
+import { usePlanGate } from '@/hooks/usePlanGate';
 
 export default function FAB() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const plan = useAppStore((s) => s.plan);
-  const projects = useAppStore((s) => s.projects);
   const [open, setOpen] = useState(false);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
-  const [planGateOpen, setPlanGateOpen] = useState(false);
+  const { checkAndGate, GateDrawer } = usePlanGate();
 
   const actions = [
     { icon: FolderKanban, label: t('projects.new'), key: 'project' },
@@ -27,9 +24,7 @@ export default function FAB() {
   const handleAction = (key: string) => {
     setOpen(false);
     if (key === 'project') {
-      if (plan === 'free' && projects.length >= 1) {
-        setPlanGateOpen(true);
-      } else {
+      if (checkAndGate('project')) {
         setCreateProjectOpen(true);
       }
     } else {
@@ -70,7 +65,7 @@ export default function FAB() {
       </Drawer>
 
       <CreateProjectModal open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
-      <PlanGateDrawer open={planGateOpen} onOpenChange={setPlanGateOpen} onViewPlans={() => setPlanGateOpen(false)} />
+      {GateDrawer}
     </>
   );
 }

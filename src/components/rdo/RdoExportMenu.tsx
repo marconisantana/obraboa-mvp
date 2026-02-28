@@ -7,6 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { RdoDetail } from '@/hooks/useRdos';
+import { usePlanGate } from '@/hooks/usePlanGate';
 
 interface RdoExportMenuProps {
   rdo: RdoDetail;
@@ -14,10 +15,14 @@ interface RdoExportMenuProps {
 
 export default function RdoExportMenu({ rdo }: RdoExportMenuProps) {
   const { t } = useTranslation();
+  const { checkAndGate, GateDrawer } = usePlanGate();
 
   const summary = buildSummary(rdo);
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    if (!checkAndGate('pdf_export')) return;
+    window.print();
+  };
 
   const handleShare = async (method: 'whatsapp' | 'telegram' | 'email') => {
     const text = summary;
@@ -45,27 +50,30 @@ export default function RdoExportMenu({ rdo }: RdoExportMenuProps) {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Share2 size={14} className="mr-1" /> {t('rdo.export')}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handlePrint}>
-          <FileDown size={14} className="mr-2" /> {t('rdo.export')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
-          {t('rdo.shareWhatsapp')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('telegram')}>
-          {t('rdo.shareTelegram')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('email')}>
-          {t('rdo.shareEmail')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Share2 size={14} className="mr-1" /> {t('rdo.export')}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handlePrint}>
+            <FileDown size={14} className="mr-2" /> {t('rdo.export')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
+            {t('rdo.shareWhatsapp')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShare('telegram')}>
+            {t('rdo.shareTelegram')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleShare('email')}>
+            {t('rdo.shareEmail')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {GateDrawer}
+    </>
   );
 }
 

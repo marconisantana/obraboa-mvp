@@ -16,6 +16,7 @@ import {
 import { UserPlus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import InviteMemberDialog from './InviteMemberDialog';
+import { usePlanGate } from '@/hooks/usePlanGate';
 
 interface MemberInfo {
   id: string;
@@ -40,6 +41,7 @@ export default function MembersSection({ projectId }: { projectId: string }) {
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const { checkAndGate, GateDrawer } = usePlanGate();
 
   const fetchMembers = async () => {
     const { data } = await supabase
@@ -90,7 +92,11 @@ export default function MembersSection({ projectId }: { projectId: string }) {
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-muted-foreground">{t('projectView.members')}</p>
         {(isOwner || currentUserRole === 'professional') && (
-          <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => {
+            if (checkAndGate('member', { memberCount: members.length })) {
+              setInviteOpen(true);
+            }
+          }}>
             <UserPlus size={14} className="mr-1" />
             {t('projectView.invite')}
           </Button>
@@ -153,6 +159,7 @@ export default function MembersSection({ projectId }: { projectId: string }) {
       </div>
 
       <InviteMemberDialog projectId={projectId} open={inviteOpen} onOpenChange={setInviteOpen} />
+      {GateDrawer}
     </div>
   );
 }

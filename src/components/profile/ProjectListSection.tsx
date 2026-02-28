@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Archive, FolderKanban } from 'lucide-react';
 import CreateProjectModal from '@/components/profile/CreateProjectModal';
-import PlanGateDrawer from '@/components/profile/PlanGateDrawer';
+import { usePlanGate } from '@/hooks/usePlanGate';
 
 const statusColors: Record<ProjectStatus, string> = {
   planning: 'bg-blue-100 text-blue-700',
@@ -25,14 +25,11 @@ export default function ProjectListSection() {
   const navigate = useNavigate();
   const projects = useAppStore((s) => s.projects);
   const setProjects = useAppStore((s) => s.setProjects);
-  const plan = useAppStore((s) => s.plan);
   const [createOpen, setCreateOpen] = useState(false);
-  const [planGateOpen, setPlanGateOpen] = useState(false);
+  const { checkAndGate, GateDrawer } = usePlanGate();
 
   const handleNewProject = () => {
-    if (plan === 'free' && projects.length >= 1) {
-      setPlanGateOpen(true);
-    } else {
+    if (checkAndGate('project')) {
       setCreateOpen(true);
     }
   };
@@ -94,7 +91,7 @@ export default function ProjectListSection() {
     </Card>
 
     <CreateProjectModal open={createOpen} onOpenChange={setCreateOpen} />
-    <PlanGateDrawer open={planGateOpen} onOpenChange={setPlanGateOpen} onViewPlans={() => setPlanGateOpen(false)} />
+    {GateDrawer}
     </>
   );
 }

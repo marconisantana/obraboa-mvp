@@ -440,7 +440,17 @@
   },
   "planGate": {
     "title": "Upgrade required",
-    "description": "The free plan allows only 1 project. Upgrade to create more projects."
+    "description": "The free plan allows only 1 project. Upgrade to create more projects.",
+    "projectTitle": "Project limit reached",
+    "projectDesc": "Your plan allows up to {{count}} project(s). Upgrade to create more.",
+    "memberTitle": "Member limit reached",
+    "memberDesc": "Your plan allows up to {{count}} member(s) per project. Upgrade to add more.",
+    "pdfTitle": "PDF Export",
+    "pdfDesc": "PDF export is available starting from the Basic plan.",
+    "financialTitle": "Financial Module",
+    "financialDesc": "The financial module is available starting from the Flipper plan.",
+    "upgrade": "Upgrade",
+    "currentPlan": "Current plan: {{plan}}"
   },
   "offline": {
     "title": "No connection",
