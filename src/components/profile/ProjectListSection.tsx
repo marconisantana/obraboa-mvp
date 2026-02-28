@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore, type Project, type ProjectStatus } from '@/stores/useAppStore';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Archive, FolderKanban } from 'lucide-react';
+import CreateProjectModal from '@/components/profile/CreateProjectModal';
 
 const statusColors: Record<ProjectStatus, string> = {
   planning: 'bg-blue-100 text-blue-700',
@@ -22,6 +24,7 @@ export default function ProjectListSection() {
   const navigate = useNavigate();
   const projects = useAppStore((s) => s.projects);
   const setProjects = useAppStore((s) => s.setProjects);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const handleArchive = async (project: Project) => {
     const { error } = await supabase
@@ -39,6 +42,7 @@ export default function ProjectListSection() {
   const activeProjects = projects.filter((p) => p.status !== 'cancelled');
 
   return (
+    <>
     <Card>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -46,7 +50,7 @@ export default function ProjectListSection() {
             <FolderKanban size={18} className="text-primary" />
             {t('profile.myProjects')}
           </p>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>
+          <Button variant="ghost" size="sm" onClick={() => setCreateOpen(true)}>
             <Plus size={16} /> {t('profile.createProject')}
           </Button>
         </div>
@@ -77,5 +81,8 @@ export default function ProjectListSection() {
         )}
       </CardContent>
     </Card>
+
+    <CreateProjectModal open={createOpen} onOpenChange={setCreateOpen} />
+    </>
   );
 }

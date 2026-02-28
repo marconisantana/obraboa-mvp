@@ -61,7 +61,14 @@
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this project?",
     "members": "Members",
-    "active": "Active"
+    "active": "Active",
+    "type": "Type",
+    "coverImage": "Cover photo",
+    "createProject": "Create Project",
+    "residencial": "Residential",
+    "comercial": "Commercial",
+    "reforma": "Renovation",
+    "flip": "Flip"
   },
   "profile": {
     "title": "My Profile",

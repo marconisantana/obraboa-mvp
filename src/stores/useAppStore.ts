@@ -17,6 +17,8 @@ export interface Project {
   id: string;
   name: string;
   address: string | null;
+  type: string | null;
+  cover_image_url: string | null;
   status: ProjectStatus;
   start_date: string | null;
   end_date: string | null;
