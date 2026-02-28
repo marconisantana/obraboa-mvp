@@ -1,82 +1,152 @@
 
 
-## Novo Bottom Navigation para ObraBoa
+## Cronograma de Servicos
 
 ### Resumo
 
-Substituir o `BottomNav.tsx` atual por um novo componente `BottomNavigation.tsx` com as 5 abas solicitadas, visual atualizado (fundo branco, cores navy/cinza, fonte Nunito 11px), e atualizar o Sidebar para manter consistencia.
+Criar o modulo completo de Cronograma de Servicos com tabela no banco de dados, duas visualizacoes (Lista e Gantt simplificado), formulario de criacao/edicao de etapas, sistema de predecessores/dependencias, e acoes por etapa (editar, concluir, excluir com swipe).
 
 ---
 
-### 1. Adicionar fonte Nunito
+### 1. Tabela no banco de dados: `stages`
 
-Adicionar import do Google Fonts Nunito no `src/index.css` (ao lado do Inter existente).
+Criar tabela `stages` com as seguintes colunas:
 
-### 2. Atualizar traducoes
+| Coluna | Tipo | Default | Nullable |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | No |
+| project_id | uuid | - | No (FK -> projects.id ON DELETE CASCADE) |
+| title | text | - | No |
+| description | text | '' | Yes |
+| service_type | text | 'general' | No |
+| environment | text | '' | Yes |
+| responsible_name | text | '' | Yes |
+| start_date | date | - | No |
+| end_date | date | - | No |
+| status | text | 'pending' | No |
+| progress | integer | 0 | No |
+| predecessor_id | uuid | null | Yes (FK -> stages.id ON DELETE SET NULL) |
+| created_at | timestamptz | now() | No |
+| updated_at | timestamptz | now() | No |
 
-Modificar `pt-BR.json` e `en-US.json` com as novas chaves de navegacao:
+RLS policies:
+- SELECT: owner do projeto pode ver
+- INSERT: owner do projeto pode criar
+- UPDATE: owner do projeto pode editar
+- DELETE: owner do projeto pode excluir
+
+Trigger `update_updated_at_column` na tabela.
+
+### 2. Traducoes (i18n)
+
+Novas chaves em `pt-BR.json` e `en-US.json`:
 
 ```
-"nav": {
-  "home": "Inicio" / "Home",
-  "projects": "Obras" / "Projects",
-  "tools": "Ferramentas" / "Tools",
-  "pending": "Pendencias" / "Pending",
-  "profile": "Perfil" / "Profile"
+"schedule": {
+  "title": "Cronograma",
+  "addStage": "Adicionar Etapa",
+  "editStage": "Editar Etapa",
+  "viewList": "Lista",
+  "viewTimeline": "Linha do tempo",
+  "sortByDate": "Por data",
+  "sortByStatus": "Por status",
+  "noStages": "Nenhuma etapa cadastrada",
+  "noStagesDesc": "Adicione a primeira etapa do cronograma",
+  "stageTitle": "Titulo",
+  "startDate": "Data de inicio",
+  "endDate": "Data de fim",
+  "responsible": "Responsavel",
+  "serviceType": "Tipo de servico",
+  "environment": "Ambiente",
+  "description": "Descricao",
+  "status": "Status",
+  "progress": "Progresso",
+  "predecessor": "Predecessor",
+  "noPredecessor": "Nenhum",
+  "pending": "Pendente",
+  "in_progress": "Em andamento",
+  "completed": "Concluido",
+  "delayed": "Atrasado",
+  "markComplete": "Marcar como concluida",
+  "deleteConfirm": "Tem certeza que deseja excluir esta etapa?",
+  "predecessorWarning": "Esta etapa possui dependentes. Deseja aplicar a mesma alteracao de datas aos dependentes?",
+  "applyToDependents": "Aplicar aos dependentes",
+  "skipDependents": "Apenas esta etapa",
+  "selectPredecessor": "Vincular a uma etapa existente?"
 }
 ```
 
-### 3. Criar `src/components/BottomNavigation.tsx`
+### 3. Hook `useStages`
 
-Novo componente com:
-- **5 abas**: Inicio (Home), Obras (HardHat), Ferramentas (Wrench), Pendencias (CircleAlert), Perfil (User)
-- **Visual**: fundo `#FFFFFF`, sombra no topo (`shadow-[0_-2px_10px_rgba(0,0,0,0.08)]`), altura 64px + safe-area
-- **Cores**: ativa `#0D3259` (navy), inativa `#9CA3AF` (cinza)
-- **Fonte label**: Nunito, 11px
-- **Responsivo**: oculto acima de 768px (`md:hidden`)
-- **Rotas**: `/` , `/projects`, `/tools`, `/pending`, `/profile`
+Criar `src/hooks/useStages.ts`:
+- Usa React Query + Supabase para CRUD de stages por `project_id`
+- Funcoes: `fetchStages`, `createStage`, `updateStage`, `deleteStage`
+- Ao atualizar datas de uma etapa com dependentes, buscar todas as stages que tem `predecessor_id` igual a ela e retornar para a UI perguntar ao usuario
 
-### 4. Criar paginas placeholder
+### 4. Componentes
 
-Criar `src/pages/ToolsPage.tsx` e `src/pages/PendingPage.tsx` com conteudo simples "Em breve".
+**`src/components/schedule/StageCard.tsx`** - Card de etapa para a visualizacao em lista:
+- Titulo, badge de status colorido (cinza/azul/verde/vermelho)
+- Barra de progresso inline com %
+- Datas inicio-fim, responsavel (avatar com iniciais), tipo de servico
+- Swipe left no mobile revela botoes editar/excluir (usando touch events)
+- Botao de menu (tres pontos) no desktop com opcoes: editar, marcar concluida, excluir
 
-### 5. Atualizar `AppLayout.tsx`
+**`src/components/schedule/StageForm.tsx`** - Formulario Dialog/Drawer:
+- Campos: titulo, data inicio, data fim, responsavel, tipo de servico, ambiente, descricao, status inicial
+- Select de predecessor: lista todas as outras etapas do projeto
+- Validacao com react-hook-form + zod
+- Modo criacao e edicao
 
-Substituir import de `BottomNav` por `BottomNavigation`.
+**`src/components/schedule/GanttTimeline.tsx`** - Visualizacao Gantt simplificada:
+- Container com scroll horizontal
+- Eixo X: dias/semanas entre a menor data de inicio e maior data de fim
+- Cada etapa como barra horizontal colorida pelo status
+- Label do titulo na barra
+- Linhas de conexao simples (seta) entre predecessor e dependente
+- Click na barra abre o formulario de edicao
 
-### 6. Atualizar `App.tsx`
+**`src/components/schedule/DependencyDialog.tsx`** - Dialog de confirmacao:
+- Aparece ao alterar datas de etapa que possui dependentes
+- Pergunta: "Deseja aplicar a mesma alteracao de datas aos dependentes?"
+- Opcoes: "Aplicar aos dependentes" / "Apenas esta etapa"
 
-Adicionar rotas `/tools` e `/pending` dentro do bloco protegido.
+### 5. Pagina SchedulePage reformulada
 
-### 7. Atualizar `Sidebar.tsx`
+Reescrever `src/pages/SchedulePage.tsx`:
+- **Sem projeto ativo**: mostra mensagem pedindo para selecionar projeto
+- **Com projeto ativo**:
+  - Toggle no topo: Lista | Linha do tempo (usando Tabs do shadcn)
+  - Botao de ordenacao: por data (padrao) ou por status
+  - Botao "+ Adicionar Etapa" no topo
+  - Tab Lista: renderiza StageCards
+  - Tab Timeline: renderiza GanttTimeline
+  - Estado vazio: ilustracao + CTA
 
-Sincronizar os itens de navegacao do Sidebar desktop com as mesmas 5 abas.
+### 6. Roteamento
 
-### 8. Remover `BottomNav.tsx`
-
-Arquivo antigo pode ser removido.
+A rota `/schedule` ja existe no `App.tsx`. O modulo de cronograma tambem sera acessivel pelo atalho na tela de detalhe do projeto (`ProjectDetailPage`), que navegara para `/schedule` setando o projeto ativo.
 
 ---
 
 ### Detalhes Tecnicos
 
-- **Icones Lucide**: `Home`, `HardHat`, `Wrench`, `CircleAlert`, `User`
-- **Breakpoint**: `md:hidden` (768px) em vez do atual `lg:hidden` (1024px)
-- **Safe area**: `padding-bottom: env(safe-area-inset-bottom)` via classe `.safe-bottom` ja existente
-- **Fonte Nunito**: carregada via Google Fonts, aplicada apenas aos labels do bottom nav
+- **Swipe-to-action**: Touch events simples (onTouchStart/Move/End) que detecta swipe esquerdo > 80px para revelar botoes de acao. Sem biblioteca externa.
+- **Gantt**: Implementacao custom com divs posicionadas. Calculo de posicao: `(stageStart - timelineStart) / totalDays * 100%` para left, `(stageEnd - stageStart) / totalDays * 100%` para width.
+- **Predecessores**: Ao salvar alteracao de datas, o hook verifica se existem stages com `predecessor_id = stage.id`. Se sim, retorna a lista para o componente exibir o DependencyDialog. Se o usuario confirmar, aplica o mesmo delta de dias a todos os dependentes recursivamente.
+- **Status automatico "Atrasado"**: Na query, stages com `end_date < today` e `status != 'completed'` sao exibidas com badge "Atrasado" (calculado no frontend, nao salvo no banco).
+- **React Query**: invalidate queries apos mutations para manter dados sincronizados.
 
 ### Arquivos a criar
-- `src/components/BottomNavigation.tsx`
-- `src/pages/ToolsPage.tsx`
-- `src/pages/PendingPage.tsx`
+- `src/hooks/useStages.ts`
+- `src/components/schedule/StageCard.tsx`
+- `src/components/schedule/StageForm.tsx`
+- `src/components/schedule/GanttTimeline.tsx`
+- `src/components/schedule/DependencyDialog.tsx`
 
 ### Arquivos a modificar
-- `src/index.css` (adicionar Nunito)
-- `public/locales/pt-BR.json` e `en-US.json` (novas chaves nav)
-- `src/components/AppLayout.tsx` (trocar componente)
-- `src/components/Sidebar.tsx` (sincronizar abas)
-- `src/App.tsx` (novas rotas)
-
-### Arquivos a remover
-- `src/components/BottomNav.tsx`
+- `public/locales/pt-BR.json` (novas chaves schedule)
+- `public/locales/en-US.json` (novas chaves schedule)
+- `src/pages/SchedulePage.tsx` (reescrever completo)
+- `src/pages/ProjectDetailPage.tsx` (atalho cronograma navega para /schedule)
 
