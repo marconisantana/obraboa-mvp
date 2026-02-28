@@ -46,6 +46,13 @@ const FEATURE_ACCESS: Record<PlanType, FeatureKey[]> = {
   pro: ['multi_project', 'pdf_export', 'unlimited_members', 'financial_module'],
 };
 
+export const PLAN_LIMITS: Record<PlanType, { projects: number; members: number }> = {
+  free: { projects: 1, members: 1 },
+  basic: { projects: 3, members: 3 },
+  flipper: { projects: 3, members: 5 },
+  pro: { projects: 10, members: 10 },
+};
+
 interface AppState {
   user: Profile | null;
   setUser: (user: Profile | null) => void;
@@ -58,6 +65,9 @@ interface AppState {
 
   plan: PlanType;
   canAccessFeature: (feature: FeatureKey) => boolean;
+  getPlanLimits: () => { projects: number; members: number };
+  canCreateProject: () => boolean;
+  canAddMember: (currentMemberCount: number) => boolean;
 
   activities: Activity[];
   isLoadingActivities: boolean;
@@ -79,6 +89,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   canAccessFeature: (feature) => {
     const { plan } = get();
     return FEATURE_ACCESS[plan]?.includes(feature) ?? false;
+  },
+  getPlanLimits: () => {
+    const { plan } = get();
+    return PLAN_LIMITS[plan];
+  },
+  canCreateProject: () => {
+    const { plan, projects } = get();
+    return projects.filter((p) => p.status !== 'cancelled').length < PLAN_LIMITS[plan].projects;
+  },
+  canAddMember: (currentMemberCount) => {
+    const { plan } = get();
+    return currentMemberCount < PLAN_LIMITS[plan].members;
   },
 
   activities: [],

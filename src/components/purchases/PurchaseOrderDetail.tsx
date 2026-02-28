@@ -18,6 +18,7 @@ import {
 import PurchaseOrderForm from './PurchaseOrderForm';
 import { generatePurchaseOrderPdf } from '@/lib/generatePurchaseOrderPdf';
 import { format, parseISO } from 'date-fns';
+import { usePlanGate } from '@/hooks/usePlanGate';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -38,6 +39,7 @@ export default function PurchaseOrderDetailPage() {
   const { data: order, isLoading } = detailQuery(id);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { checkAndGate, GateDrawer } = usePlanGate();
 
   if (isLoading) return <p className="text-center py-10 text-muted-foreground">{t('common.loading')}</p>;
   if (!order) return <p className="text-center py-10 text-muted-foreground">{t('common.noResults')}</p>;
@@ -46,6 +48,7 @@ export default function PurchaseOrderDetailPage() {
   const grandTotal = order.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
 
   const handleExportPdf = () => {
+    if (!checkAndGate('pdf_export')) return;
     const doc = generatePurchaseOrderPdf(order, activeProject?.name || '');
     doc.save(`${order.order_number}.pdf`);
   };
@@ -203,6 +206,7 @@ export default function PurchaseOrderDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {GateDrawer}
     </>
   );
 }
