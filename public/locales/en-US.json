@@ -130,7 +130,30 @@
   },
   "documents": {
     "title": "Documents",
-    "comingSoon": "Coming soon"
+    "newFolder": "New folder",
+    "uploadFiles": "Upload files",
+    "folderName": "Folder name",
+    "rename": "Rename",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete?",
+    "deleteFolderWarning": "All files inside this folder will be deleted.",
+    "download": "Download",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied!",
+    "preview": "Preview",
+    "noFiles": "No files in this directory",
+    "noFilesDesc": "Upload files or create folders to organize your documents",
+    "size": "Size",
+    "uploadedAt": "Uploaded at",
+    "uploadedBy": "Uploaded by",
+    "selectProject": "Select a project to view documents",
+    "rootFolder": "Documents",
+    "defaultFolderProjects": "Projects",
+    "defaultFolderContracts": "Contracts",
+    "defaultFolderPhotos": "Photos",
+    "defaultFolderOthers": "Others",
+    "renamePlaceholder": "New name",
+    "uploading": "Uploading..."
   },
   "rdo": {
     "title": "Daily Log",
@@ -264,7 +287,7 @@
       "checklists": "Checklists",
       "purchases": "Purchases",
       "dossiers": "Dossiers",
-      "references": "References"
+      "documents": "Documents"
     }
   },
   "projectSelector": {

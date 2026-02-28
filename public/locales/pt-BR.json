@@ -130,7 +130,30 @@
   },
   "documents": {
     "title": "Documentos",
-    "comingSoon": "Em breve"
+    "newFolder": "Nova pasta",
+    "uploadFiles": "Enviar arquivos",
+    "folderName": "Nome da pasta",
+    "rename": "Renomear",
+    "delete": "Excluir",
+    "deleteConfirm": "Tem certeza que deseja excluir?",
+    "deleteFolderWarning": "Todos os arquivos dentro desta pasta serão excluídos.",
+    "download": "Baixar",
+    "copyLink": "Copiar link",
+    "linkCopied": "Link copiado!",
+    "preview": "Visualizar",
+    "noFiles": "Nenhum arquivo neste diretório",
+    "noFilesDesc": "Envie arquivos ou crie pastas para organizar seus documentos",
+    "size": "Tamanho",
+    "uploadedAt": "Enviado em",
+    "uploadedBy": "Enviado por",
+    "selectProject": "Selecione um projeto para ver os documentos",
+    "rootFolder": "Documentos",
+    "defaultFolderProjects": "Projetos",
+    "defaultFolderContracts": "Contratos",
+    "defaultFolderPhotos": "Fotos",
+    "defaultFolderOthers": "Outros",
+    "renamePlaceholder": "Novo nome",
+    "uploading": "Enviando..."
   },
   "rdo": {
     "title": "Diário de Obra",
@@ -264,7 +287,7 @@
       "checklists": "Checklists",
       "purchases": "Compras",
       "dossiers": "Dossiês",
-      "references": "Referências"
+      "documents": "Documentos"
     }
   },
   "projectSelector": {
