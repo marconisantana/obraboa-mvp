@@ -19,34 +19,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setUser = useAppStore((s) => s.setUser);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const fetchProfile = (userId: string) => {
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setUser({
+              id: data.id,
+              full_name: data.full_name,
+              avatar_url: data.avatar_url,
+              account_type: data.account_type as 'personal' | 'professional',
+              created_at: data.created_at,
+              updated_at: data.updated_at,
+            });
+          }
+        });
+    };
+
+    // Set up listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        // Fetch profile
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-        if (data) {
-          setUser({
-            id: data.id,
-            full_name: data.full_name,
-            avatar_url: data.avatar_url,
-            account_type: data.account_type as 'personal' | 'professional',
-            created_at: data.created_at,
-            updated_at: data.updated_at,
-          });
-        }
+        fetchProfile(session.user.id);
       } else {
         setUser(null);
       }
       setIsLoading(false);
     });
 
+    // Then restore session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (!session) setIsLoading(false);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
