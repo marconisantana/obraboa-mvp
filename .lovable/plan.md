@@ -1,133 +1,74 @@
 
 
-## Telas Home (Feed) e Visão do Projeto + FAB + Seletor de Projeto
+## Splash Screen e Onboarding
 
 ### Resumo
 
-Criar a tela Home com feed de atividades (mock data), a tela Visão do Projeto com detalhes e atalhos de modulos, o seletor de projeto no Header, e o FAB com bottom sheet de acoes rapidas.
+Adicionar uma Splash Screen animada (1.5s com logo centralizado em fundo navy) e um fluxo de Onboarding de 3 passos que aparece apenas na primeira vez, antes de redirecionar para Login/Signup.
 
 ---
 
-### 1. Adicionar traducoes ao pt-BR.json
+### 1. Splash Screen (`src/pages/SplashPage.tsx`)
 
-Novas chaves para:
-- `home.emptyTitle`, `home.emptyCta` (estado vazio)
-- `home.pullToRefresh`
-- `home.projectSelector`, `home.allProjects`
-- `fab.newRdo`, `fab.newStage`, `fab.newChecklist`, `fab.newOc`, `fab.quickActions`
-- `projectView.title`, `projectView.progress`, `projectView.startDate`, `projectView.endDate`, `projectView.invite`, `projectView.members`
-- `projectView.modules.schedule`, `projectView.modules.rdo`, `projectView.modules.checklists`, `projectView.modules.purchases`, `projectView.modules.dossiers`, `projectView.modules.references`
-- `projects.in_progress` (alias para status "Em andamento" - corrigir se necessario)
+- Tela fullscreen com fundo `#1B3A5C`
+- Logo `logo-obraboa-white.svg` centralizado (240px de largura)
+- Animacao de fade-in na logo ao montar
+- Apos 1.5s, transicao suave (fade-out) para:
+  - Se primeiro acesso (sem flag `onboarding_done` no localStorage): vai para `/onboarding`
+  - Se ja fez onboarding: vai para `/login`
+  - Se ja esta autenticado: vai para `/`
+- Rota: `/splash` (sera a rota inicial `/` para usuarios nao autenticados)
 
----
+### 2. Onboarding (`src/pages/OnboardingPage.tsx`)
 
-### 2. Mock data para atividades
+- Tela fullscreen com 3 steps, navegacao por botoes "Proximo" / dots indicadores
+- **Botao "Pular"** no canto superior direito em todos os steps
+- **Step 1** - "Bem-vindo ao ObraBoa": headline grande, subtitulo com tagline, ilustracao com icone de construcao (Lucide icons compostos)
+- **Step 2** - "Organize sua obra": 3 cards destacando funcionalidades principais (Cronograma, RDO, Checklists) com icones
+- **Step 3** - "Comece agora": CTA grande "Criar conta" que navega para `/signup`, link secundario "Ja tenho conta" para `/login`
+- Ao completar ou pular: salva `onboarding_done = true` no localStorage
+- Animacoes de transicao entre steps usando Framer Motion (slide horizontal)
 
-Criar `src/data/mockActivities.ts` com ~6 atividades de exemplo:
-- Diferentes tipos: rdo, checklist, schedule, purchase_order
-- Nomes de membros, descricoes, timestamps recentes
-- Avatares placeholder (iniciais)
+### 3. Roteamento
 
----
+Modificar `src/App.tsx`:
+- Adicionar rota `/splash` com `SplashPage`
+- Adicionar rota `/onboarding` com `OnboardingPage`
+- Alterar `ProtectedRoute` para redirecionar para `/splash` em vez de `/login` quando nao autenticado (splash faz o redirecionamento inteligente)
 
-### 3. Componente ProjectSelector
+### 4. Traducoes (i18n)
 
-Criar `src/components/ProjectSelector.tsx`:
-- Dropdown usando Popover/Command do shadcn
-- Mostra nome do projeto ativo com icone ChevronDown
-- Lista todos os projetos ao clicar
-- Se so tem 1, mostra ele sem dropdown
-- Se nao tem nenhum, mostra "Selecione um projeto"
-- Ao selecionar, chama `setActiveProject`
+Adicionar chaves em `pt-BR.json` e `en-US.json`:
+```
+"onboarding": {
+  "skip": "Pular",
+  "next": "Proximo",
+  "step1Title": "Bem-vindo ao ObraBoa",
+  "step1Subtitle": "O assistente completo para gerenciar sua obra do inicio ao fim",
+  "step2Title": "Organize sua obra",
+  "step2Subtitle": "Tudo que voce precisa em um so lugar",
+  "step2Feature1": "Cronograma",
+  "step2Feature1Desc": "Planeje etapas e acompanhe o progresso",
+  "step2Feature2": "Diario de Obra",
+  "step2Feature2Desc": "Registre atividades com fotos diariamente",
+  "step2Feature3": "Checklists",
+  "step2Feature3Desc": "Controle qualidade e conformidade",
+  "step3Title": "Comece agora",
+  "step3Subtitle": "Crie sua conta gratuita e comece a organizar suas obras",
+  "createAccount": "Criar conta",
+  "alreadyHaveAccount": "Ja tenho conta"
+}
+```
 
----
+### 5. Arquivos
 
-### 4. Header atualizado
-
-Modificar `src/components/Header.tsx`:
-- Mobile: logo icon a esquerda, ProjectSelector no centro, icone Bell (placeholder) a direita
-- Desktop: ProjectSelector + Bell (sidebar ja tem logo)
-
----
-
-### 5. HomePage reformulada (Feed de Atividades)
-
-Reescrever `src/pages/HomePage.tsx`:
-- **Com projeto ativo**: mostra feed de atividades mock em cards cronologicos
-  - Cada card: avatar circular com iniciais, nome + acao, timestamp relativo (date-fns `formatDistanceToNow`), icone da categoria
-- **Sem projeto / projeto vazio**: ilustracao (icone grande) + CTA "Comece adicionando a primeira etapa do cronograma"
-- **Sem projetos**: card com CTA para criar projeto
-- Pull-to-refresh: detectar swipe down no mobile para "recarregar" feed
-
----
-
-### 6. FAB com Bottom Sheet de Acoes Rapidas
-
-Criar `src/components/FAB.tsx`:
-- Botao flutuante (+) fixo em `bottom-20 right-4` (acima do bottom nav)
-- Visivel apenas no mobile (`lg:hidden`)
-- Ao clicar, abre Drawer (bottom sheet) com 4 opcoes:
-  - Novo RDO (icone FileText)
-  - Nova Etapa (icone CalendarDays)
-  - Novo Checklist (icone CheckSquare)
-  - Nova OC (icone ShoppingCart)
-- Cada opcao com icone + label, por enquanto mostra toast "Em breve"
-- Mover o FAB do ProjectsPage para ca (remover duplicacao)
-
----
-
-### 7. Tela Visao do Projeto
-
-Criar `src/pages/ProjectDetailPage.tsx`:
-- Rota: `/projects/:id` (nova rota no App.tsx)
-- Tambem acessivel pela aba "Projetos" quando ha projeto ativo
-- **Card de capa**: cor solida de fundo (primary/10) como padrao
-- **Info**: nome, endereco, badge de status colorido
-- **Barra de progresso**: linear com % mock (ex: 35%)
-- **Datas**: inicio previsto -> conclusao prevista
-- **Membros**: row de avatares circulares mock + botao "Convidar" (placeholder)
-- **Grade de atalhos**: grid 3x2 com cards para cada modulo:
-  - Cronograma, RDO, Checklists, Compras, Dossies, Referencias
-  - Cada card com icone + label, navega para rota futura ou mostra toast
-
----
-
-### 8. Roteamento
-
-Atualizar `src/App.tsx`:
-- Adicionar rota `/projects/:id` -> `ProjectDetailPage`
-- FAB sera adicionado no `AppLayout` para aparecer em todas as telas
-
----
-
-### 9. AppLayout atualizado
-
-Modificar `src/components/AppLayout.tsx`:
-- Incluir componente `<FAB />` no layout
-- Remover FAB duplicado do ProjectsPage
-
----
+- **Criar**: `src/pages/SplashPage.tsx`, `src/pages/OnboardingPage.tsx`
+- **Modificar**: `src/App.tsx` (rotas), `src/components/ProtectedRoute.tsx` (redirect para /splash), `public/locales/pt-BR.json`, `public/locales/en-US.json`
 
 ### Detalhes Tecnicos
 
-- **Pull-to-refresh**: implementar com touch events simples (onTouchStart/onTouchMove/onTouchEnd) que detecta swipe para baixo quando scroll esta no topo
-- **Timestamp relativo**: usar `formatDistanceToNow` do date-fns com locale pt-BR
-- **Mock data**: dados estaticos em arquivo separado, sem chamadas ao banco
-- **FAB**: removido do ProjectsPage, centralizado no AppLayout
-- **ProjectSelector**: usa Popover + lista simples, consome `projects` e `activeProject` do Zustand store
-
-### Arquivos a criar
-- `src/data/mockActivities.ts`
-- `src/components/ProjectSelector.tsx`
-- `src/components/FAB.tsx`
-- `src/pages/ProjectDetailPage.tsx`
-
-### Arquivos a modificar
-- `public/locales/pt-BR.json` (novas chaves)
-- `public/locales/en-US.json` (novas chaves)
-- `src/components/Header.tsx` (seletor + bell)
-- `src/pages/HomePage.tsx` (feed completo)
-- `src/components/AppLayout.tsx` (adicionar FAB)
-- `src/pages/ProjectsPage.tsx` (remover FAB, click navega para detalhe)
-- `src/App.tsx` (nova rota /projects/:id)
+- **Persistencia**: `localStorage.getItem('obraboa_onboarding_done')` para controlar se onboarding ja foi visto
+- **Animacoes**: Framer Motion `AnimatePresence` + `motion.div` para transicoes entre steps e fade da splash
+- **Timer splash**: `setTimeout` de 1500ms + `useNavigate` do react-router
+- **Dots indicator**: 3 circulos pequenos abaixo do conteudo, o ativo em cor accent `#F59E0B`
 
