@@ -52,7 +52,7 @@ export default function ProjectDetailPage() {
     { key: 'checklists', icon: CheckSquare },
     { key: 'purchases', icon: ShoppingCart },
     { key: 'dossiers', icon: FolderArchive },
-    { key: 'references', icon: BookImage },
+    { key: 'documents', icon: BookImage },
   ];
 
   return (
@@ -153,6 +153,8 @@ export default function ProjectDetailPage() {
                 navigate('/purchases');
               } else if (key === 'dossiers') {
                 navigate('/dossiers');
+              } else if (key === 'documents') {
+                navigate('/documents');
               } else {
                 toast({ title: t('common.comingSoon') });
               }
