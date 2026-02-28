@@ -1,76 +1,45 @@
 
 
-## Modulos Compras (OCs) e Dossies
+## Modulo Organizador de Documentos
 
 ### Resumo
 
-Criar dois modulos completos: **Ordens de Compra** (criacao, listagem, exportacao PDF, compartilhamento) e **Dossies** (controle financeiro de fornecedores com parcelas, comprovantes e alertas visuais).
+Criar um organizador de documentos com layout estilo Dropbox: navegacao por pastas com breadcrumb, upload de arquivos, preview inline, compartilhamento de links e gestao de pastas/arquivos.
 
 ---
 
 ### 1. Banco de dados
 
-**Tabela `purchase_orders`:**
+**Tabela `document_folders`:**
 
 | Coluna | Tipo | Default | Nullable |
 |---|---|---|---|
 | id | uuid | gen_random_uuid() | No |
 | project_id | uuid | FK -> projects.id CASCADE | No |
-| user_id | uuid | auth.uid() | No |
-| order_number | text | - | No |
-| supplier_name | text | - | No |
-| supplier_contact | text | '' | Yes |
-| observations | text | '' | Yes |
-| status | text | 'draft' | No |
-| created_at | timestamptz | now() | No |
-| updated_at | timestamptz | now() | No |
-
-**Tabela `purchase_order_items`:**
-
-| Coluna | Tipo | Default | Nullable |
-|---|---|---|---|
-| id | uuid | gen_random_uuid() | No |
-| order_id | uuid | FK -> purchase_orders.id CASCADE | No |
-| description | text | - | No |
-| quantity | numeric(10,2) | 1 | No |
-| unit | text | 'un' | No |
-| sort_order | integer | 0 | No |
-
-**Tabela `dossiers`:**
-
-| Coluna | Tipo | Default | Nullable |
-|---|---|---|---|
-| id | uuid | gen_random_uuid() | No |
-| project_id | uuid | FK -> projects.id CASCADE | No |
-| user_id | uuid | auth.uid() | No |
+| parent_id | uuid | FK -> document_folders.id CASCADE | Yes (null = raiz) |
 | name | text | - | No |
-| supplier_name | text | '' | Yes |
-| agreed_value | numeric(12,2) | 0 | No |
-| additive_value | numeric(12,2) | 0 | No |
-| observations | text | '' | Yes |
 | created_at | timestamptz | now() | No |
-| updated_at | timestamptz | now() | No |
+| user_id | uuid | auth.uid() | No |
 
-**Tabela `dossier_payments`:**
+**Tabela `document_files`:**
 
 | Coluna | Tipo | Default | Nullable |
 |---|---|---|---|
 | id | uuid | gen_random_uuid() | No |
-| dossier_id | uuid | FK -> dossiers.id CASCADE | No |
-| due_date | date | - | No |
-| amount | numeric(12,2) | - | No |
-| status | text | 'pending' | No |
-| paid_date | date | null | Yes |
-| receipt_path | text | null | Yes |
+| project_id | uuid | FK -> projects.id CASCADE | No |
+| folder_id | uuid | FK -> document_folders.id SET NULL | Yes (null = raiz) |
+| name | text | - | No |
+| storage_path | text | - | No |
+| file_type | text | - | No |
+| file_size | bigint | 0 | No |
+| uploaded_by | uuid | auth.uid() | No |
 | created_at | timestamptz | now() | No |
 
-**Storage bucket**: `dossier-receipts` (public) para comprovantes de pagamento.
+**Storage bucket**: `project-documents` (public).
 
-**RLS**: Todas as tabelas com policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = <table>.project_id AND projects.owner_id = auth.uid())`. Para `purchase_order_items` e `dossier_payments`, join via tabela pai.
+**RLS**: Policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = <table>.project_id AND projects.owner_id = auth.uid())` para ambas as tabelas. CRUD completo (SELECT, INSERT, UPDATE, DELETE).
 
-**Triggers**: `update_updated_at_column` em `purchase_orders` e `dossiers`.
-
-**Funcao para numero auto**: Uma funcao SQL `generate_next_oc_number(project_uuid)` que retorna o proximo numero no formato `OC-001`, `OC-002`, etc., com base na contagem de OCs existentes do projeto.
+**Pastas padrao**: Ao criar um projeto (ou ao acessar documents pela primeira vez), criar automaticamente 4 pastas raiz: "Projetos", "Contratos", "Fotos", "Outros". Isso sera feito no frontend (verificar se existem pastas, se nao criar as 4).
 
 ---
 
@@ -79,205 +48,132 @@ Criar dois modulos completos: **Ordens de Compra** (criacao, listagem, exportaca
 Novas chaves em `pt-BR.json` e `en-US.json`:
 
 ```text
-"purchases": {
-  "title": "Ordens de Compra",
-  "new": "Nova OC",
-  "edit": "Editar OC",
-  "orderNumber": "Numero da OC",
-  "supplierName": "Fornecedor",
-  "supplierContact": "Contato (telefone/email)",
-  "observations": "Observacoes",
-  "items": "Itens",
-  "addItem": "Adicionar item",
-  "itemDescription": "Descricao",
-  "quantity": "Qtd",
-  "unit": "Unidade",
-  "status": "Status",
-  "draft": "Rascunho",
-  "sent": "Enviada",
-  "approved": "Aprovada",
-  "received": "Recebida",
-  "noPurchases": "Nenhuma OC cadastrada",
-  "noPurchasesDesc": "Crie a primeira ordem de compra",
-  "exportPdf": "Exportar PDF",
-  "shareWhatsapp": "Enviar por WhatsApp",
-  "shareEmail": "Enviar por e-mail",
-  "deleteConfirm": "Tem certeza que deseja excluir esta OC?",
-  "markSent": "Marcar como enviada",
-  "selectProject": "Selecione um projeto para ver as OCs"
-}
-
-"dossiers": {
-  "title": "Dossies",
-  "new": "Novo Dossie",
-  "edit": "Editar Dossie",
-  "name": "Nome/Servico",
-  "supplier": "Fornecedor",
-  "agreedValue": "Valor acordado",
-  "additiveValue": "Aditivo",
-  "addAdditive": "Adicionar aditivo",
-  "totalAgreed": "Total acordado",
-  "totalPaid": "Total pago",
-  "remaining": "Valor pendente",
-  "observations": "Observacoes",
-  "in_progress": "Em andamento",
-  "settled": "Quitado",
-  "exceeded": "Extrapolado",
-  "noDossiers": "Nenhum dossie cadastrado",
-  "nodossiersDesc": "Crie o primeiro dossie do projeto",
-  "payments": "Pagamentos",
-  "addPayment": "Adicionar pagamento",
-  "dueDate": "Vencimento",
-  "amount": "Valor",
-  "paidDate": "Data de pagamento",
-  "pending": "Pendente",
-  "paid": "Pago",
-  "overdue": "Atrasado",
-  "markPaid": "Marcar como pago",
-  "uploadReceipt": "Comprovante",
-  "exceededWarning": "Atencao: valor pago (R$ {paid}) excede o acordado (R$ {agreed})",
-  "deleteConfirm": "Tem certeza que deseja excluir este dossie?",
-  "selectProject": "Selecione um projeto para ver os dossies",
-  "progressLabel": "R$ {paid} de R$ {total}"
+"documents": {
+  "title": "Documentos",
+  "newFolder": "Nova pasta",
+  "uploadFiles": "Enviar arquivos",
+  "folderName": "Nome da pasta",
+  "rename": "Renomear",
+  "delete": "Excluir",
+  "deleteConfirm": "Tem certeza que deseja excluir?",
+  "deleteFolderWarning": "Todos os arquivos dentro desta pasta serao excluidos.",
+  "download": "Baixar",
+  "copyLink": "Copiar link",
+  "linkCopied": "Link copiado!",
+  "preview": "Visualizar",
+  "noFiles": "Nenhum arquivo neste diretorio",
+  "noFilesDesc": "Envie arquivos ou crie pastas para organizar seus documentos",
+  "size": "Tamanho",
+  "uploadedAt": "Enviado em",
+  "uploadedBy": "Enviado por",
+  "selectProject": "Selecione um projeto para ver os documentos",
+  "rootFolder": "Documentos",
+  "defaultFolderProjects": "Projetos",
+  "defaultFolderContracts": "Contratos",
+  "defaultFolderPhotos": "Fotos",
+  "defaultFolderOthers": "Outros",
+  "renamePlaceholder": "Novo nome",
+  "uploading": "Enviando..."
 }
 ```
 
 ---
 
-### 3. Hooks
+### 3. Hook `useDocuments`
 
-**`src/hooks/usePurchaseOrders.ts`:**
-- React Query + Supabase CRUD para `purchase_orders` e `purchase_order_items`
-- `fetchOrders(projectId)`: lista com contagem de itens
-- `fetchOrderDetail(orderId)`: OC completa com itens
-- `createOrder`, `updateOrder`, `deleteOrder`
-- `generateOrderNumber(projectId)`: busca contagem de OCs e retorna proximo numero
-- Ao marcar como "enviada", atualiza status automaticamente
+Criar `src/hooks/useDocuments.ts`:
 
-**`src/hooks/useDossiers.ts`:**
-- React Query + Supabase CRUD para `dossiers` e `dossier_payments`
-- `fetchDossiers(projectId)`: lista com soma de pagamentos para calcular status
-- `fetchDossierDetail(dossierId)`: dossie completo com pagamentos
-- `createDossier`, `updateDossier`, `deleteDossier`
-- `addPayment`, `markPaymentPaid`, `deletePayment`
-- `uploadReceipt(paymentId, file)`: upload para bucket `dossier-receipts`
-- Status calculado no frontend: comparando soma dos pagamentos pagos vs valor acordado + aditivos
+- `fetchFolders(projectId, parentId)`: lista pastas filhas de um diretorio
+- `fetchFiles(projectId, folderId)`: lista arquivos de um diretorio
+- `ensureDefaultFolders(projectId)`: cria as 4 pastas padrao se nao existirem
+- `createFolder(projectId, parentId, name)`
+- `renameFolder(folderId, newName)`, `deleteFolder(folderId)` (deleta recursivamente)
+- `uploadFiles(projectId, folderId, files[])`: upload para bucket + insert no banco
+- `renameFile(fileId, newName)`, `deleteFile(fileId)` (remove do storage + banco)
+- `getFilePublicUrl(storagePath)`: URL publica
+- `getTemporaryLink(storagePath)`: URL assinada temporaria para compartilhamento
+- `fetchBreadcrumb(folderId)`: consulta recursiva para montar o caminho de pastas
 
 ---
 
-### 4. Componentes - Compras
+### 4. Componentes
 
-**`src/components/purchases/PurchaseOrderCard.tsx`:**
-- Numero da OC, fornecedor, data, badge de status (cinza/azul/verde/laranja)
-- Contagem de itens
-- Click navega para detalhe
+**`src/components/documents/DocumentBreadcrumb.tsx`:**
+- Breadcrumb com links clicaveis: "Documentos > Contratos > Subpasta"
+- Usa o componente Breadcrumb do shadcn/ui ja existente
+- Click em cada nivel navega para aquela pasta
 
-**`src/components/purchases/PurchaseOrderForm.tsx`:**
-- Dialog com campos: numero (auto-gerado, read-only), fornecedor, contato, observacoes
-- Tabela dinamica de itens: descricao, qtd, unidade + botao adicionar/remover
-- Validacao com zod
+**`src/components/documents/FolderCard.tsx`:**
+- Icone de pasta, nome, data de criacao
+- Click abre a pasta (navega)
+- Menu de contexto: renomear, excluir
 
-**`src/components/purchases/PurchaseOrderDetail.tsx`:**
-- Cabecalho com numero, fornecedor, contato, status
-- Tabela de itens
-- Botoes: editar, exportar PDF, compartilhar WhatsApp/email, marcar como enviada
-- Menu de exportacao similar ao RdoExportMenu
+**`src/components/documents/FileRow.tsx`:**
+- Icone por tipo (PDF, imagem, planilha, DWG, generico)
+- Nome, tamanho formatado (KB/MB), data de upload, nome de quem enviou
+- Acoes: preview, download, copiar link, renomear, excluir
 
-**`src/components/purchases/PurchaseOrderPrintView.tsx`:**
-- Layout para impressao: logo ObraBoa, dados do projeto, tabela de itens formatada, observacoes
-- CSS `@media print`
+**`src/components/documents/FilePreviewDialog.tsx`:**
+- Modal para preview inline
+- Imagens: renderiza `<img>` direto
+- PDFs: renderiza em `<iframe>` com URL publica
+- Outros tipos: mostra icone grande + informacoes + botao de download
 
----
+**`src/components/documents/CreateFolderDialog.tsx`:**
+- Dialog simples com input de nome + botao criar
 
-### 5. Componentes - Dossies
-
-**`src/components/dossiers/DossierCard.tsx`:**
-- Nome/fornecedor, valor acordado, valor pago, valor pendente
-- Badge de status colorido (amarelo/verde/vermelho)
-- Barra de progresso do valor pago
-
-**`src/components/dossiers/DossierForm.tsx`:**
-- Dialog com campos: nome, fornecedor, valor acordado, observacoes
-- Opcao de programar pagamentos: lista dinamica de {data vencimento, valor}
-- Validacao com zod
-
-**`src/components/dossiers/DossierDetail.tsx`:**
-- Cabecalho: fornecedor/servico, valor total acordado (incluindo aditivos), barra de progresso
-- Botao "Adicionar aditivo" que incrementa o valor
-- Banner vermelho se valor pago > acordado
-- Lista de pagamentos com: data vencimento, valor, status badge, data pagamento
-- Botao "Marcar como pago" em cada parcela pendente
-- Upload de comprovante por parcela (foto/arquivo)
-- Botao adicionar novo pagamento
-
-**`src/components/dossiers/PaymentRow.tsx`:**
-- Linha individual de pagamento
-- Badge de status: pendente (cinza), pago (verde), atrasado (vermelho - vencimento < hoje e nao pago)
-- Botao marcar pago, botao upload comprovante, preview do comprovante
+**`src/components/documents/RenameDialog.tsx`:**
+- Dialog com input preenchido com nome atual + botao salvar
 
 ---
 
-### 6. Paginas
+### 5. Pagina DocumentsPage
 
-**`src/pages/PurchasesPage.tsx`:**
+Reescrever `src/pages/DocumentsPage.tsx`:
+
 - Sem projeto ativo: mensagem pedindo selecionar
-- Lista de OCs ordenada por created_at desc
-- Botao "+ Nova OC"
-
-**`src/pages/PurchaseOrderDetailPage.tsx`:**
-- Renderiza PurchaseOrderDetail com dados do hook
-
-**`src/pages/DossiersPage.tsx`:**
-- Sem projeto ativo: mensagem pedindo selecionar
-- Lista de dossies ordenada por updated_at desc
-- Botao "+ Novo Dossie"
-
-**`src/pages/DossierDetailPage.tsx`:**
-- Renderiza DossierDetail com dados do hook
+- State local: `currentFolderId` (null = raiz)
+- Breadcrumb no topo
+- Secao de pastas (grid de cards)
+- Secao de arquivos (lista/tabela com icone, nome, tamanho, data, autor)
+- Botoes no topo: "+ Nova pasta" e "Enviar arquivos"
+- Input de upload: accept=".pdf,.jpeg,.jpg,.png,.xlsx,.xls,.dwg" multiple
+- Ao entrar na primeira vez, chama `ensureDefaultFolders`
 
 ---
 
-### 7. Roteamento
+### 6. Roteamento
 
-Adicionar em `App.tsx`:
-- `/purchases` - PurchasesPage
-- `/purchases/:id` - PurchaseOrderDetailPage
-- `/dossiers` - DossiersPage
-- `/dossiers/:id` - DossierDetailPage
+A rota `/documents` ja existe no `App.tsx`. Nao precisa de rota nova. A navegacao de pastas sera feita via state local (nao via URL), mantendo simples.
 
-Atualizar `ProjectDetailPage`: atalhos "Compras" e "Dossies" navegam para as respectivas rotas.
+Atualizar `ProjectDetailPage`: adicionar "Documentos" como modulo no grid de atalhos, navegando para `/documents`.
 
 ---
 
 ### Detalhes Tecnicos
 
-- **Numero auto OC**: Query `SELECT COUNT(*) FROM purchase_orders WHERE project_id = ?`, formata como `OC-${(count+1).toString().padStart(3, '0')}`.
-- **Status dossie calculado**: `totalPaid = SUM(pagamentos com status='paid')`. Se `totalPaid >= agreedValue + additiveValue` -> "Quitado". Se `totalPaid > agreedValue + additiveValue` -> "Extrapolado". Senao -> "Em andamento".
-- **Pagamento atrasado**: `due_date < today AND status = 'pending'` - calculado no frontend.
-- **Upload comprovante**: Bucket `dossier-receipts`, path `{dossier_id}/{payment_id}/{uuid}.ext`.
-- **Exportacao PDF (OC)**: Mesma abordagem do RDO - componente `PurchaseOrderPrintView` com CSS `@media print` + `window.print()`. Compartilhamento via Web Share API / links WhatsApp/email com texto resumido.
-- **Formatacao monetaria**: `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`.
+- **Upload**: Bucket `project-documents`, path `{project_id}/{folder_id || 'root'}/{uuid}_{filename}`. Upload via `supabase.storage.from('project-documents').upload()`.
+- **Icone por tipo**: Mapeamento simples: `.pdf` -> FileText vermelho, `.jpg/.jpeg/.png` -> Image azul, `.xlsx/.xls` -> Table verde, `.dwg` -> Ruler laranja, outros -> File cinza.
+- **Tamanho formatado**: Funcao utilitaria `formatFileSize(bytes)` que retorna "1.2 MB", "340 KB", etc.
+- **Link temporario**: `supabase.storage.from('project-documents').createSignedUrl(path, 3600)` gera URL valida por 1h. Copiar para clipboard via `navigator.clipboard.writeText()`.
+- **Download**: Usa a URL publica com atributo `download` ou `window.open()`.
+- **Breadcrumb recursivo**: Query que busca a pasta atual e seus pais iterativamente ate `parent_id = null`.
+- **Delete folder**: Deleta todos os arquivos da pasta (e subpastas) do storage primeiro, depois deleta os registros do banco. O CASCADE no FK cuida das subpastas.
+- **Pastas padrao**: No `useEffect` do DocumentsPage, verifica se existem pastas raiz. Se nao, cria as 4 com um batch insert.
 
 ### Arquivos a criar
-- Migracao SQL (4 tabelas + bucket + RLS + triggers)
-- `src/hooks/usePurchaseOrders.ts`
-- `src/hooks/useDossiers.ts`
-- `src/components/purchases/PurchaseOrderCard.tsx`
-- `src/components/purchases/PurchaseOrderForm.tsx`
-- `src/components/purchases/PurchaseOrderDetail.tsx`
-- `src/components/purchases/PurchaseOrderPrintView.tsx`
-- `src/components/dossiers/DossierCard.tsx`
-- `src/components/dossiers/DossierForm.tsx`
-- `src/components/dossiers/DossierDetail.tsx`
-- `src/components/dossiers/PaymentRow.tsx`
-- `src/pages/PurchasesPage.tsx`
-- `src/pages/PurchaseOrderDetailPage.tsx`
-- `src/pages/DossiersPage.tsx`
-- `src/pages/DossierDetailPage.tsx`
+- Migracao SQL (2 tabelas + bucket + RLS)
+- `src/hooks/useDocuments.ts`
+- `src/components/documents/DocumentBreadcrumb.tsx`
+- `src/components/documents/FolderCard.tsx`
+- `src/components/documents/FileRow.tsx`
+- `src/components/documents/FilePreviewDialog.tsx`
+- `src/components/documents/CreateFolderDialog.tsx`
+- `src/components/documents/RenameDialog.tsx`
 
 ### Arquivos a modificar
-- `src/App.tsx` (novas rotas)
-- `src/pages/ProjectDetailPage.tsx` (atalhos navegam para /purchases e /dossiers)
-- `public/locales/pt-BR.json` (novas chaves purchases + dossiers)
-- `public/locales/en-US.json` (novas chaves purchases + dossiers)
+- `src/pages/DocumentsPage.tsx` (reescrever completamente)
+- `src/pages/ProjectDetailPage.tsx` (adicionar atalho "Documentos")
+- `public/locales/pt-BR.json` (novas chaves documents)
+- `public/locales/en-US.json` (novas chaves documents)
 
