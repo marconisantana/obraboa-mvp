@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/stores/useAppStore';
+import { useProjectRole } from '@/hooks/useProjectRole';
 import { useChecklists } from '@/hooks/useChecklists';
 import { Button } from '@/components/ui/button';
 import { Plus, ClipboardCheck } from 'lucide-react';
@@ -10,6 +11,7 @@ import ChecklistForm from '@/components/checklist/ChecklistForm';
 export default function ChecklistsPage() {
   const { t } = useTranslation();
   const activeProject = useAppStore((s) => s.activeProject);
+  const { canEdit } = useProjectRole();
   const { checklistsQuery, createChecklist } = useChecklists();
   const [formOpen, setFormOpen] = useState(false);
 
@@ -28,9 +30,11 @@ export default function ChecklistsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold">{t('checklist.title')}</h1>
-        <Button size="sm" onClick={() => setFormOpen(true)}>
-          <Plus size={16} className="mr-1" /> {t('checklist.new')}
-        </Button>
+        {canEdit && (
+          <Button size="sm" onClick={() => setFormOpen(true)}>
+            <Plus size={16} className="mr-1" /> {t('checklist.new')}
+          </Button>
+        )}
       </div>
 
       {checklists.length === 0 ? (

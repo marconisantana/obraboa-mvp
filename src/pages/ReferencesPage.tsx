@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/stores/useAppStore';
+import { useProjectRole } from '@/hooks/useProjectRole';
 import { useReferences } from '@/hooks/useReferences';
 import { Button } from '@/components/ui/button';
 import { ImagePlus, Images } from 'lucide-react';
@@ -13,6 +14,7 @@ import type { Reference } from '@/hooks/useReferences';
 export default function ReferencesPage() {
   const { t } = useTranslation();
   const activeProject = useAppStore(s => s.activeProject);
+  const { canEdit } = useProjectRole();
   const {
     references, loading, fetchReferences,
     createFromUpload, createFromUrl,
@@ -43,10 +45,12 @@ export default function ReferencesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">{t('references.title')}</h1>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
-          <ImagePlus size={16} />
-          {t('references.new')}
-        </Button>
+        {canEdit && (
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <ImagePlus size={16} />
+            {t('references.new')}
+          </Button>
+        )}
       </div>
 
       {/* Category filter */}

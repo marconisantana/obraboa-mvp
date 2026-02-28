@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { compressImage } from '@/lib/compressImage';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, Plus, Trash2, ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -45,6 +47,7 @@ interface RdoFormProps {
 export default function RdoForm({ open, onOpenChange, editId, editData }: RdoFormProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const activeProject = useAppStore((s) => s.activeProject);
   const { createRdo, updateRdo, checkDuplicateDate } = useRdos();
 
@@ -70,9 +73,10 @@ export default function RdoForm({ open, onOpenChange, editId, editData }: RdoFor
     setTeamMembers(updated);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newPhotos = files.map((file) => ({
+    const compressed = await Promise.all(files.map((f) => compressImage(f)));
+    const newPhotos = compressed.map((file) => ({
       file,
       caption: '',
       preview: URL.createObjectURL(file),
@@ -100,7 +104,17 @@ export default function RdoForm({ open, onOpenChange, editId, editData }: RdoFor
     if (!editId) {
       const existing = await checkDuplicateDate(activeProject.id, dateStr);
       if (existing) {
-        toast({ title: t('rdo.duplicateDate') });
+        toast({
+          title: t('rdo.duplicateDate'),
+          action: (
+            <button
+              className="text-xs font-semibold underline"
+              onClick={() => { onOpenChange(false); navigate(`/rdo/${existing.id}`); }}
+            >
+              {t('rdo.editExisting')}
+            </button>
+          ),
+        });
         return;
       }
     }

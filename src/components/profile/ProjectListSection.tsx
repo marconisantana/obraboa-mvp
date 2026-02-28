@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Archive, FolderKanban } from 'lucide-react';
 import CreateProjectModal from '@/components/profile/CreateProjectModal';
+import PlanGateDrawer from '@/components/profile/PlanGateDrawer';
 
 const statusColors: Record<ProjectStatus, string> = {
   planning: 'bg-blue-100 text-blue-700',
@@ -24,7 +25,17 @@ export default function ProjectListSection() {
   const navigate = useNavigate();
   const projects = useAppStore((s) => s.projects);
   const setProjects = useAppStore((s) => s.setProjects);
+  const plan = useAppStore((s) => s.plan);
   const [createOpen, setCreateOpen] = useState(false);
+  const [planGateOpen, setPlanGateOpen] = useState(false);
+
+  const handleNewProject = () => {
+    if (plan === 'free' && projects.length >= 1) {
+      setPlanGateOpen(true);
+    } else {
+      setCreateOpen(true);
+    }
+  };
 
   const handleArchive = async (project: Project) => {
     const { error } = await supabase
@@ -50,7 +61,7 @@ export default function ProjectListSection() {
             <FolderKanban size={18} className="text-primary" />
             {t('profile.myProjects')}
           </p>
-          <Button variant="ghost" size="sm" onClick={() => setCreateOpen(true)}>
+          <Button variant="ghost" size="sm" onClick={handleNewProject}>
             <Plus size={16} /> {t('profile.createProject')}
           </Button>
         </div>
@@ -83,6 +94,7 @@ export default function ProjectListSection() {
     </Card>
 
     <CreateProjectModal open={createOpen} onOpenChange={setCreateOpen} />
+    <PlanGateDrawer open={planGateOpen} onOpenChange={setPlanGateOpen} onViewPlans={() => setPlanGateOpen(false)} />
     </>
   );
 }

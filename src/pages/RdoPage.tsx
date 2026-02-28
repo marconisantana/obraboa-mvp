@@ -5,6 +5,7 @@ import { Plus, CalendarDays, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/stores/useAppStore';
+import { useProjectRole } from '@/hooks/useProjectRole';
 import { useRdos } from '@/hooks/useRdos';
 import RdoCard from '@/components/rdo/RdoCard';
 import RdoForm from '@/components/rdo/RdoForm';
@@ -14,6 +15,7 @@ export default function RdoPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProject = useAppStore((s) => s.activeProject);
+  const { canEdit } = useProjectRole();
   const { rdos, isLoading } = useRdos();
   const [formOpen, setFormOpen] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
@@ -40,9 +42,11 @@ export default function RdoPage() {
           <Button variant="outline" size="sm" onClick={() => setShowWeekly(true)}>
             <CalendarDays size={14} className="mr-1" /> {t('rdo.weeklySummary')}
           </Button>
-          <Button size="sm" onClick={() => setFormOpen(true)}>
-            <Plus size={14} className="mr-1" /> {t('rdo.newRdo')}
-          </Button>
+          {canEdit && (
+            <Button size="sm" onClick={() => setFormOpen(true)}>
+              <Plus size={14} className="mr-1" /> {t('rdo.newRdo')}
+            </Button>
+          )}
         </div>
       </div>
 

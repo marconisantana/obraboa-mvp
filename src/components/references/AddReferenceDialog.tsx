@@ -36,9 +36,11 @@ export default function AddReferenceDialog({ open, onOpenChange, onCreateFromUpl
     setCategory('outros'); setObservation(''); setTab('upload');
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.files?.[0];
+    if (!raw) return;
+    const { compressImage } = await import('@/lib/compressImage');
+    const f = await compressImage(raw);
     setFile(f);
     setPreview(URL.createObjectURL(f));
   };

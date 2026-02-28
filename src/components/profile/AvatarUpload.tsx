@@ -25,10 +25,12 @@ export default function AvatarUpload() {
     .slice(0, 2) || '?';
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !authUser || !profile) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile || !authUser || !profile) return;
 
     setUploading(true);
+    const { compressImage } = await import('@/lib/compressImage');
+    const file = await compressImage(rawFile);
     const path = `${authUser.id}/avatar.jpg`;
 
     const { error: uploadError } = await supabase.storage
