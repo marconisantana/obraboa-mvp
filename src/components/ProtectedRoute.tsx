@@ -13,7 +13,7 @@ export default function ProtectedRoute() {
   }
 
   if (!session) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/splash" replace />;
   }
 
   return <Outlet />;

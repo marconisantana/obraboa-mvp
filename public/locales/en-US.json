@@ -126,5 +126,23 @@
   "projectSelector": {
     "select": "Select a project",
     "allProjects": "All projects"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "step1Title": "Welcome to ObraBoa",
+    "step1Subtitle": "The complete assistant to manage your construction from start to finish",
+    "step2Title": "Organize your project",
+    "step2Subtitle": "Everything you need in one place",
+    "step2Feature1": "Schedule",
+    "step2Feature1Desc": "Plan stages and track progress",
+    "step2Feature2": "Daily Log",
+    "step2Feature2Desc": "Record activities with photos daily",
+    "step2Feature3": "Checklists",
+    "step2Feature3Desc": "Quality and compliance control",
+    "step3Title": "Get started",
+    "step3Subtitle": "Create your free account and start organizing your projects",
+    "createAccount": "Create account",
+    "alreadyHaveAccount": "Already have an account"
   }
 }

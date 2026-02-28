@@ -126,5 +126,23 @@
   "projectSelector": {
     "select": "Selecione um projeto",
     "allProjects": "Todos os projetos"
+  },
+  "onboarding": {
+    "skip": "Pular",
+    "next": "Próximo",
+    "step1Title": "Bem-vindo ao ObraBoa",
+    "step1Subtitle": "O assistente completo para gerenciar sua obra do início ao fim",
+    "step2Title": "Organize sua obra",
+    "step2Subtitle": "Tudo que você precisa em um só lugar",
+    "step2Feature1": "Cronograma",
+    "step2Feature1Desc": "Planeje etapas e acompanhe o progresso",
+    "step2Feature2": "Diário de Obra",
+    "step2Feature2Desc": "Registre atividades com fotos diariamente",
+    "step2Feature3": "Checklists",
+    "step2Feature3Desc": "Controle qualidade e conformidade",
+    "step3Title": "Comece agora",
+    "step3Subtitle": "Crie sua conta gratuita e comece a organizar suas obras",
+    "createAccount": "Criar conta",
+    "alreadyHaveAccount": "Já tenho conta"
   }
 }
