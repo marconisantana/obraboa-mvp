@@ -34,12 +34,13 @@ export interface Activity {
   created_at: string;
 }
 
-export type PlanType = 'free' | 'basic' | 'pro';
+export type PlanType = 'free' | 'basic' | 'flipper' | 'pro';
 export type FeatureKey = 'multi_project' | 'pdf_export' | 'unlimited_members' | 'financial_module';
 
 const FEATURE_ACCESS: Record<PlanType, FeatureKey[]> = {
   free: [],
   basic: ['multi_project', 'pdf_export'],
+  flipper: ['multi_project', 'pdf_export', 'financial_module'],
   pro: ['multi_project', 'pdf_export', 'unlimited_members', 'financial_module'],
 };
 
