@@ -1,15 +1,42 @@
 
-## Modulo Checklists
+
+## Modulos Compras (OCs) e Dossies
 
 ### Resumo
 
-Criar o modulo completo de Checklists inspirado no Checklist Facil, com banco de dados (3 tabelas + storage), listagem com progresso, templates pre-definidos, tela de checklist com itens interativos (checkbox otimista, reordenacao, upload de foto de comprovacao), e barra de progresso no topo.
+Criar dois modulos completos: **Ordens de Compra** (criacao, listagem, exportacao PDF, compartilhamento) e **Dossies** (controle financeiro de fornecedores com parcelas, comprovantes e alertas visuais).
 
 ---
 
 ### 1. Banco de dados
 
-**Tabela `checklists`:**
+**Tabela `purchase_orders`:**
+
+| Coluna | Tipo | Default | Nullable |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | No |
+| project_id | uuid | FK -> projects.id CASCADE | No |
+| user_id | uuid | auth.uid() | No |
+| order_number | text | - | No |
+| supplier_name | text | - | No |
+| supplier_contact | text | '' | Yes |
+| observations | text | '' | Yes |
+| status | text | 'draft' | No |
+| created_at | timestamptz | now() | No |
+| updated_at | timestamptz | now() | No |
+
+**Tabela `purchase_order_items`:**
+
+| Coluna | Tipo | Default | Nullable |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | No |
+| order_id | uuid | FK -> purchase_orders.id CASCADE | No |
+| description | text | - | No |
+| quantity | numeric(10,2) | 1 | No |
+| unit | text | 'un' | No |
+| sort_order | integer | 0 | No |
+
+**Tabela `dossiers`:**
 
 | Coluna | Tipo | Default | Nullable |
 |---|---|---|---|
@@ -17,158 +44,240 @@ Criar o modulo completo de Checklists inspirado no Checklist Facil, com banco de
 | project_id | uuid | FK -> projects.id CASCADE | No |
 | user_id | uuid | auth.uid() | No |
 | name | text | - | No |
-| status | text | 'in_progress' | No |
-| responsible_name | text | '' | Yes |
-| due_date | date | null | Yes |
+| supplier_name | text | '' | Yes |
+| agreed_value | numeric(12,2) | 0 | No |
+| additive_value | numeric(12,2) | 0 | No |
+| observations | text | '' | Yes |
 | created_at | timestamptz | now() | No |
 | updated_at | timestamptz | now() | No |
 
-**Tabela `checklist_items`:**
+**Tabela `dossier_payments`:**
 
 | Coluna | Tipo | Default | Nullable |
 |---|---|---|---|
 | id | uuid | gen_random_uuid() | No |
-| checklist_id | uuid | FK -> checklists.id CASCADE | No |
-| text | text | - | No |
-| checked | boolean | false | No |
-| responsible_name | text | '' | Yes |
-| due_date | date | null | Yes |
-| sort_order | integer | 0 | No |
+| dossier_id | uuid | FK -> dossiers.id CASCADE | No |
+| due_date | date | - | No |
+| amount | numeric(12,2) | - | No |
+| status | text | 'pending' | No |
+| paid_date | date | null | Yes |
+| receipt_path | text | null | Yes |
 | created_at | timestamptz | now() | No |
 
-**Tabela `checklist_item_photos`:**
+**Storage bucket**: `dossier-receipts` (public) para comprovantes de pagamento.
 
-| Coluna | Tipo | Default | Nullable |
-|---|---|---|---|
-| id | uuid | gen_random_uuid() | No |
-| item_id | uuid | FK -> checklist_items.id CASCADE | No |
-| storage_path | text | - | No |
-| created_at | timestamptz | now() | No |
+**RLS**: Todas as tabelas com policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = <table>.project_id AND projects.owner_id = auth.uid())`. Para `purchase_order_items` e `dossier_payments`, join via tabela pai.
 
-**Storage bucket**: `checklist-photos` (public).
+**Triggers**: `update_updated_at_column` em `purchase_orders` e `dossiers`.
 
-**RLS**: Todas as tabelas com policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = checklists.project_id AND projects.owner_id = auth.uid())` (com joins para item_photos via checklist_items -> checklists).
+**Funcao para numero auto**: Uma funcao SQL `generate_next_oc_number(project_uuid)` que retorna o proximo numero no formato `OC-001`, `OC-002`, etc., com base na contagem de OCs existentes do projeto.
 
-**Trigger** `update_updated_at_column` na tabela `checklists`.
+---
 
 ### 2. Traducoes (i18n)
 
 Novas chaves em `pt-BR.json` e `en-US.json`:
 
 ```text
-"checklist": {
-  "title": "Checklists",
-  "new": "Novo Checklist",
-  "edit": "Editar Checklist",
-  "name": "Nome do checklist",
-  "responsible": "Responsavel",
-  "dueDate": "Prazo",
-  "noChecklists": "Nenhum checklist cadastrado",
-  "noChecklistsDesc": "Crie o primeiro checklist do projeto",
-  "templates": "Criar a partir de template",
-  "templateInspection": "Vistoria de recebimento",
-  "templateCleaning": "Limpeza pos obra",
-  "templateHandover": "Entrega de chaves",
-  "templateBlank": "Em branco",
+"purchases": {
+  "title": "Ordens de Compra",
+  "new": "Nova OC",
+  "edit": "Editar OC",
+  "orderNumber": "Numero da OC",
+  "supplierName": "Fornecedor",
+  "supplierContact": "Contato (telefone/email)",
+  "observations": "Observacoes",
+  "items": "Itens",
   "addItem": "Adicionar item",
-  "itemPlaceholder": "Descreva o item...",
-  "progressLabel": "{checked} de {total} itens concluidos ({percent}%)",
+  "itemDescription": "Descricao",
+  "quantity": "Qtd",
+  "unit": "Unidade",
+  "status": "Status",
+  "draft": "Rascunho",
+  "sent": "Enviada",
+  "approved": "Aprovada",
+  "received": "Recebida",
+  "noPurchases": "Nenhuma OC cadastrada",
+  "noPurchasesDesc": "Crie a primeira ordem de compra",
+  "exportPdf": "Exportar PDF",
+  "shareWhatsapp": "Enviar por WhatsApp",
+  "shareEmail": "Enviar por e-mail",
+  "deleteConfirm": "Tem certeza que deseja excluir esta OC?",
+  "markSent": "Marcar como enviada",
+  "selectProject": "Selecione um projeto para ver as OCs"
+}
+
+"dossiers": {
+  "title": "Dossies",
+  "new": "Novo Dossie",
+  "edit": "Editar Dossie",
+  "name": "Nome/Servico",
+  "supplier": "Fornecedor",
+  "agreedValue": "Valor acordado",
+  "additiveValue": "Aditivo",
+  "addAdditive": "Adicionar aditivo",
+  "totalAgreed": "Total acordado",
+  "totalPaid": "Total pago",
+  "remaining": "Valor pendente",
+  "observations": "Observacoes",
   "in_progress": "Em andamento",
-  "completed": "Concluido",
-  "delayed": "Atrasado",
-  "uploadProof": "Foto de comprovacao",
-  "deleteConfirm": "Tem certeza que deseja excluir este checklist?",
-  "markComplete": "Marcar como concluido"
+  "settled": "Quitado",
+  "exceeded": "Extrapolado",
+  "noDossiers": "Nenhum dossie cadastrado",
+  "nodossiersDesc": "Crie o primeiro dossie do projeto",
+  "payments": "Pagamentos",
+  "addPayment": "Adicionar pagamento",
+  "dueDate": "Vencimento",
+  "amount": "Valor",
+  "paidDate": "Data de pagamento",
+  "pending": "Pendente",
+  "paid": "Pago",
+  "overdue": "Atrasado",
+  "markPaid": "Marcar como pago",
+  "uploadReceipt": "Comprovante",
+  "exceededWarning": "Atencao: valor pago (R$ {paid}) excede o acordado (R$ {agreed})",
+  "deleteConfirm": "Tem certeza que deseja excluir este dossie?",
+  "selectProject": "Selecione um projeto para ver os dossies",
+  "progressLabel": "R$ {paid} de R$ {total}"
 }
 ```
 
-### 3. Templates pre-definidos
+---
 
-Definidos como constante no frontend (sem banco). Cada template e um array de strings que sera usado para criar os itens iniciais:
+### 3. Hooks
 
-- **Vistoria de recebimento**: "Verificar paredes e revestimentos", "Verificar piso", "Verificar esquadrias", "Verificar instalacoes eletricas", "Verificar instalacoes hidraulicas", "Verificar pintura", "Verificar louças e metais", "Verificar portas e fechaduras"
-- **Limpeza pos obra**: "Remover entulhos", "Limpeza grossa de pisos", "Limpeza de vidros", "Limpeza de bancadas", "Limpeza de louças sanitarias", "Aspirar todos os ambientes", "Limpeza final de pisos"
-- **Entrega de chaves**: "Testar todas as chaves", "Verificar funcionamento de fechaduras", "Testar interfone", "Verificar medidores (agua, luz, gas)", "Assinar termo de entrega", "Entregar manual do proprietario"
-- **Em branco**: []
+**`src/hooks/usePurchaseOrders.ts`:**
+- React Query + Supabase CRUD para `purchase_orders` e `purchase_order_items`
+- `fetchOrders(projectId)`: lista com contagem de itens
+- `fetchOrderDetail(orderId)`: OC completa com itens
+- `createOrder`, `updateOrder`, `deleteOrder`
+- `generateOrderNumber(projectId)`: busca contagem de OCs e retorna proximo numero
+- Ao marcar como "enviada", atualiza status automaticamente
 
-### 4. Hook `useChecklists`
+**`src/hooks/useDossiers.ts`:**
+- React Query + Supabase CRUD para `dossiers` e `dossier_payments`
+- `fetchDossiers(projectId)`: lista com soma de pagamentos para calcular status
+- `fetchDossierDetail(dossierId)`: dossie completo com pagamentos
+- `createDossier`, `updateDossier`, `deleteDossier`
+- `addPayment`, `markPaymentPaid`, `deletePayment`
+- `uploadReceipt(paymentId, file)`: upload para bucket `dossier-receipts`
+- Status calculado no frontend: comparando soma dos pagamentos pagos vs valor acordado + aditivos
 
-Criar `src/hooks/useChecklists.ts`:
-- React Query + Supabase CRUD para `checklists` e `checklist_items`
-- `fetchChecklists(projectId)`: lista com contagem de itens total/checked
-- `fetchChecklistDetail(checklistId)`: checklist com todos os itens e fotos
-- `createChecklist`, `updateChecklist`, `deleteChecklist`
-- `toggleItem(itemId, checked)`: atualiza otimisticamente no cache do React Query antes de salvar
-- `addItem`, `updateItem`, `deleteItem`, `reorderItems`
-- `uploadItemPhoto`, `deleteItemPhoto`
+---
 
-### 5. Componentes
+### 4. Componentes - Compras
 
-**`src/components/checklist/ChecklistCard.tsx`** - Card para a listagem:
-- Nome do checklist, badge de status colorido (azul/verde/vermelho)
-- Barra de progresso com "X/Y itens"
-- Data e responsavel
+**`src/components/purchases/PurchaseOrderCard.tsx`:**
+- Numero da OC, fornecedor, data, badge de status (cinza/azul/verde/laranja)
+- Contagem de itens
 - Click navega para detalhe
 
-**`src/components/checklist/ChecklistForm.tsx`** - Dialog para criar/editar:
-- Nome, responsavel, prazo
-- Selecao de template (grid de 4 opcoes) - apenas na criacao
+**`src/components/purchases/PurchaseOrderForm.tsx`:**
+- Dialog com campos: numero (auto-gerado, read-only), fornecedor, contato, observacoes
+- Tabela dinamica de itens: descricao, qtd, unidade + botao adicionar/remover
 - Validacao com zod
 
-**`src/components/checklist/ChecklistDetail.tsx`** - Tela do checklist:
-- Barra de progresso no topo: "12 de 20 itens concluidos (60%)"
-- Lista de itens com checkbox, texto, responsavel, prazo
-- Input inline no final para adicionar item rapidamente (Enter para confirmar)
-- Drag-and-drop para reordenar (usando touch events simples, similar ao swipe do StageCard)
-- Ao marcar item como concluido, habilita botao de upload de foto de comprovacao
-- Menu de acoes: editar checklist, excluir
+**`src/components/purchases/PurchaseOrderDetail.tsx`:**
+- Cabecalho com numero, fornecedor, contato, status
+- Tabela de itens
+- Botoes: editar, exportar PDF, compartilhar WhatsApp/email, marcar como enviada
+- Menu de exportacao similar ao RdoExportMenu
 
-**`src/components/checklist/ChecklistItemRow.tsx`** - Linha de item individual:
-- Checkbox com atualizacao otimista
-- Texto do item (editavel inline ao clicar)
-- Icones opcionais de responsavel e prazo
-- Botao de foto (aparece apos marcar concluido)
-- Handle de drag (icone de arrastar)
+**`src/components/purchases/PurchaseOrderPrintView.tsx`:**
+- Layout para impressao: logo ObraBoa, dados do projeto, tabela de itens formatada, observacoes
+- CSS `@media print`
 
-### 6. Pagina ChecklistsPage
+---
 
-Criar `src/pages/ChecklistsPage.tsx`:
-- Sem projeto ativo: mensagem pedindo selecionar projeto
-- Lista de checklists ordenada por updated_at desc
-- Botao "+ Novo Checklist" no topo
-- Status automatico "Atrasado": checklists com `due_date < today` e `status != 'completed'`
+### 5. Componentes - Dossies
 
-### 7. Roteamento e Navegacao
+**`src/components/dossiers/DossierCard.tsx`:**
+- Nome/fornecedor, valor acordado, valor pago, valor pendente
+- Badge de status colorido (amarelo/verde/vermelho)
+- Barra de progresso do valor pago
+
+**`src/components/dossiers/DossierForm.tsx`:**
+- Dialog com campos: nome, fornecedor, valor acordado, observacoes
+- Opcao de programar pagamentos: lista dinamica de {data vencimento, valor}
+- Validacao com zod
+
+**`src/components/dossiers/DossierDetail.tsx`:**
+- Cabecalho: fornecedor/servico, valor total acordado (incluindo aditivos), barra de progresso
+- Botao "Adicionar aditivo" que incrementa o valor
+- Banner vermelho se valor pago > acordado
+- Lista de pagamentos com: data vencimento, valor, status badge, data pagamento
+- Botao "Marcar como pago" em cada parcela pendente
+- Upload de comprovante por parcela (foto/arquivo)
+- Botao adicionar novo pagamento
+
+**`src/components/dossiers/PaymentRow.tsx`:**
+- Linha individual de pagamento
+- Badge de status: pendente (cinza), pago (verde), atrasado (vermelho - vencimento < hoje e nao pago)
+- Botao marcar pago, botao upload comprovante, preview do comprovante
+
+---
+
+### 6. Paginas
+
+**`src/pages/PurchasesPage.tsx`:**
+- Sem projeto ativo: mensagem pedindo selecionar
+- Lista de OCs ordenada por created_at desc
+- Botao "+ Nova OC"
+
+**`src/pages/PurchaseOrderDetailPage.tsx`:**
+- Renderiza PurchaseOrderDetail com dados do hook
+
+**`src/pages/DossiersPage.tsx`:**
+- Sem projeto ativo: mensagem pedindo selecionar
+- Lista de dossies ordenada por updated_at desc
+- Botao "+ Novo Dossie"
+
+**`src/pages/DossierDetailPage.tsx`:**
+- Renderiza DossierDetail com dados do hook
+
+---
+
+### 7. Roteamento
 
 Adicionar em `App.tsx`:
-- `/checklists` - ChecklistsPage (listagem)
-- `/checklists/:id` - ChecklistDetail (detalhe)
+- `/purchases` - PurchasesPage
+- `/purchases/:id` - PurchaseOrderDetailPage
+- `/dossiers` - DossiersPage
+- `/dossiers/:id` - DossierDetailPage
 
-Atualizar `ProjectDetailPage`: atalho "Checklists" navega para `/checklists`.
-
-Adicionar link na `ToolsPage` ou manter acesso via projeto.
+Atualizar `ProjectDetailPage`: atalhos "Compras" e "Dossies" navegam para as respectivas rotas.
 
 ---
 
 ### Detalhes Tecnicos
 
-- **Otimismo no checkbox**: Usa `queryClient.setQueryData` para atualizar o cache imediatamente, faz o `supabase.update` em background, reverte em caso de erro (`onError` da mutation).
-- **Drag-and-drop**: Implementacao leve usando `onDragStart/onDragOver/onDrop` nativo do HTML5 (atributo `draggable`). No mobile, handle de toque para reordenar. Ao soltar, atualiza `sort_order` de todos os itens afetados no banco.
-- **Foto de comprovacao**: Upload para bucket `checklist-photos` com path `{checklist_id}/{item_id}/{uuid}.jpg`. Botao de upload so aparece quando `checked = true`.
-- **Status automatico**: Calculado no frontend - se `due_date` existe e `due_date < today` e nem todos os itens estao checked, status = "delayed".
-- **Input inline**: Input no final da lista com placeholder "Descreva o item...". Ao pressionar Enter, cria o item e limpa o input. Focus permanece no input para adicao rapida.
+- **Numero auto OC**: Query `SELECT COUNT(*) FROM purchase_orders WHERE project_id = ?`, formata como `OC-${(count+1).toString().padStart(3, '0')}`.
+- **Status dossie calculado**: `totalPaid = SUM(pagamentos com status='paid')`. Se `totalPaid >= agreedValue + additiveValue` -> "Quitado". Se `totalPaid > agreedValue + additiveValue` -> "Extrapolado". Senao -> "Em andamento".
+- **Pagamento atrasado**: `due_date < today AND status = 'pending'` - calculado no frontend.
+- **Upload comprovante**: Bucket `dossier-receipts`, path `{dossier_id}/{payment_id}/{uuid}.ext`.
+- **Exportacao PDF (OC)**: Mesma abordagem do RDO - componente `PurchaseOrderPrintView` com CSS `@media print` + `window.print()`. Compartilhamento via Web Share API / links WhatsApp/email com texto resumido.
+- **Formatacao monetaria**: `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`.
 
 ### Arquivos a criar
-- Migracao SQL (tabelas + bucket + RLS)
-- `src/hooks/useChecklists.ts`
-- `src/pages/ChecklistsPage.tsx`
-- `src/components/checklist/ChecklistCard.tsx`
-- `src/components/checklist/ChecklistForm.tsx`
-- `src/components/checklist/ChecklistDetail.tsx`
-- `src/components/checklist/ChecklistItemRow.tsx`
+- Migracao SQL (4 tabelas + bucket + RLS + triggers)
+- `src/hooks/usePurchaseOrders.ts`
+- `src/hooks/useDossiers.ts`
+- `src/components/purchases/PurchaseOrderCard.tsx`
+- `src/components/purchases/PurchaseOrderForm.tsx`
+- `src/components/purchases/PurchaseOrderDetail.tsx`
+- `src/components/purchases/PurchaseOrderPrintView.tsx`
+- `src/components/dossiers/DossierCard.tsx`
+- `src/components/dossiers/DossierForm.tsx`
+- `src/components/dossiers/DossierDetail.tsx`
+- `src/components/dossiers/PaymentRow.tsx`
+- `src/pages/PurchasesPage.tsx`
+- `src/pages/PurchaseOrderDetailPage.tsx`
+- `src/pages/DossiersPage.tsx`
+- `src/pages/DossierDetailPage.tsx`
 
 ### Arquivos a modificar
 - `src/App.tsx` (novas rotas)
-- `src/pages/ProjectDetailPage.tsx` (atalho checklists navega para /checklists)
-- `public/locales/pt-BR.json` (novas chaves checklist)
-- `public/locales/en-US.json` (novas chaves checklist)
+- `src/pages/ProjectDetailPage.tsx` (atalhos navegam para /purchases e /dossiers)
+- `public/locales/pt-BR.json` (novas chaves purchases + dossiers)
+- `public/locales/en-US.json` (novas chaves purchases + dossiers)
+
