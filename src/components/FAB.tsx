@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Plus, FileText, CalendarDays, CheckSquare, ShoppingCart, FolderKanban } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { useToast } from '@/hooks/use-toast';
 import CreateProjectModal from '@/components/profile/CreateProjectModal';
 import { usePlanGate } from '@/hooks/usePlanGate';
 
 export default function FAB() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const { checkAndGate, GateDrawer } = usePlanGate();
@@ -21,14 +21,21 @@ export default function FAB() {
     { icon: ShoppingCart, label: t('fab.newOc'), key: 'oc' },
   ];
 
+  const routeMap: Record<string, string> = {
+    rdo: '/rdo',
+    stage: '/schedule',
+    checklist: '/checklists',
+    oc: '/purchases',
+  };
+
   const handleAction = (key: string) => {
     setOpen(false);
     if (key === 'project') {
       if (checkAndGate('project')) {
         setCreateProjectOpen(true);
       }
-    } else {
-      toast({ title: t('common.comingSoon') });
+    } else if (routeMap[key]) {
+      navigate(routeMap[key]);
     }
   };
 
