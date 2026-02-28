@@ -115,6 +115,72 @@ export type Database = {
         }
         Relationships: []
       }
+      stages: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string
+          environment: string | null
+          id: string
+          predecessor_id: string | null
+          progress: number
+          project_id: string
+          responsible_name: string | null
+          service_type: string
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date: string
+          environment?: string | null
+          id?: string
+          predecessor_id?: string | null
+          progress?: number
+          project_id: string
+          responsible_name?: string | null
+          service_type?: string
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          environment?: string | null
+          id?: string
+          predecessor_id?: string | null
+          progress?: number
+          project_id?: string
+          responsible_name?: string | null
+          service_type?: string
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stages_predecessor_id_fkey"
+            columns: ["predecessor_id"]
+            isOneToOne: false
+            referencedRelation: "stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
