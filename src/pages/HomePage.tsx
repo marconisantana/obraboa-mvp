@@ -1,12 +1,22 @@
 import { useTranslation } from 'react-i18next';
-import { useAppStore } from '@/stores/useAppStore';
+import { useAppStore, type ProjectStatus } from '@/stores/useAppStore';
 import { Card, CardContent } from '@/components/ui/card';
-import { FolderKanban, FileText, CheckSquare, CalendarDays, ShoppingCart, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { FolderKanban, FileText, CheckSquare, CalendarDays, ShoppingCart, RefreshCw, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Progress } from '@/components/ui/progress';
+
+const statusColors: Record<ProjectStatus, string> = {
+  planning: 'bg-blue-100 text-blue-700',
+  in_progress: 'bg-accent/20 text-accent',
+  paused: 'bg-orange-100 text-orange-700',
+  completed: 'bg-success/20 text-success',
+  cancelled: 'bg-destructive/20 text-destructive',
+};
 
 const typeIcons: Record<string, typeof FileText> = {
   rdo: FileText,
@@ -32,21 +42,54 @@ interface ActivityWithProfile {
   userInitials: string;
 }
 
+interface ProjectSummary {
+  projectId: string;
+  stageCount: number;
+  avgProgress: number;
+}
+
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const user = useAppStore((s) => s.user);
   const activeProject = useAppStore((s) => s.activeProject);
   const projects = useAppStore((s) => s.projects);
+  const setActiveProject = useAppStore((s) => s.setActiveProject);
   const navigate = useNavigate();
 
   const [activities, setActivities] = useState<ActivityWithProfile[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
+  const [projectSummaries, setProjectSummaries] = useState<Record<string, ProjectSummary>>({});
 
   // Pull-to-refresh
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const activeProjects = projects.filter((p) => p.status !== 'cancelled');
+
+  const fetchProjectSummaries = useCallback(async () => {
+    if (activeProjects.length === 0) return;
+    const ids = activeProjects.map((p) => p.id);
+    const { data } = await supabase
+      .from('stages')
+      .select('project_id, progress')
+      .in('project_id', ids);
+    if (!data) return;
+
+    const map: Record<string, ProjectSummary> = {};
+    for (const row of data) {
+      if (!map[row.project_id]) {
+        map[row.project_id] = { projectId: row.project_id, stageCount: 0, avgProgress: 0 };
+      }
+      map[row.project_id].stageCount++;
+      map[row.project_id].avgProgress += row.progress;
+    }
+    for (const key of Object.keys(map)) {
+      map[key].avgProgress = Math.round(map[key].avgProgress / map[key].stageCount);
+    }
+    setProjectSummaries(map);
+  }, [activeProjects.length]);
 
   const fetchActivities = useCallback(async () => {
     if (!activeProject) {
@@ -64,7 +107,6 @@ export default function HomePage() {
 
       if (error) throw error;
 
-      // Fetch profile names for user_ids
       const userIds = [...new Set((data ?? []).map((a) => a.user_id))];
       let profileMap: Record<string, { full_name: string }> = {};
       if (userIds.length > 0) {
@@ -108,6 +150,11 @@ export default function HomePage() {
     fetchActivities();
   }, [fetchActivities]);
 
+  useEffect(() => {
+    fetchProjectSummaries();
+  }, [fetchProjectSummaries]);
+
+  // Pull-to-refresh handlers
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (containerRef.current && containerRef.current.scrollTop === 0) {
       touchStartY.current = e.touches[0].clientY;
@@ -125,7 +172,7 @@ export default function HomePage() {
   const handleTouchEnd = useCallback(() => {
     if (pullDistance > 60) {
       setRefreshing(true);
-      fetchActivities().finally(() => {
+      Promise.all([fetchActivities(), fetchProjectSummaries()]).finally(() => {
         setRefreshing(false);
         setPullDistance(0);
       });
@@ -133,9 +180,14 @@ export default function HomePage() {
       setPullDistance(0);
     }
     touchStartY.current = 0;
-  }, [pullDistance, fetchActivities]);
+  }, [pullDistance, fetchActivities, fetchProjectSummaries]);
 
   const dateLocale = i18n.language === 'pt-BR' ? ptBR : undefined;
+
+  const handleProjectClick = (project: typeof projects[0]) => {
+    setActiveProject(project);
+    navigate(`/projects/${project.id}`);
+  };
 
   // No projects at all
   if (projects.length === 0) {
@@ -189,20 +241,71 @@ export default function HomePage() {
         {t('home.welcome')}{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : ''}! 👋
       </h1>
 
-      {!activeProject && (
-        <p className="text-muted-foreground">{t('home.selectProject')}</p>
-      )}
+      {/* Project cards */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+          {t('home.myProjects')}
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {activeProjects.map((project) => {
+            const summary = projectSummaries[project.id];
+            const progress = summary?.avgProgress ?? 0;
+            const stageCount = summary?.stageCount ?? 0;
 
-      {activeProject && !hasActivity && !loadingActivities && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-            <CalendarDays size={48} className="mb-3 text-muted-foreground/50" />
-            <p className="font-medium">{t('home.emptyTitle')}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{t('home.emptyCta')}</p>
-          </CardContent>
-        </Card>
-      )}
+            return (
+              <Card
+                key={project.id}
+                className="cursor-pointer overflow-hidden transition-shadow hover:shadow-md active:scale-[0.98]"
+                onClick={() => handleProjectClick(project)}
+              >
+                {/* Cover image */}
+                <div className="relative h-28 w-full bg-muted">
+                  {project.cover_image_url ? (
+                    <img
+                      src={project.cover_image_url}
+                      alt={project.name}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-primary/5">
+                      <FolderKanban size={32} className="text-primary/30" />
+                    </div>
+                  )}
+                  <Badge className={`absolute top-2 left-2 ${statusColors[project.status]} text-xs`}>
+                    {t(`projects.${project.status}`)}
+                  </Badge>
+                </div>
 
+                <CardContent className="p-3 space-y-2">
+                  <p className="font-semibold truncate">{project.name}</p>
+
+                  {project.address && (
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                      <MapPin size={12} className="shrink-0" /> {project.address}
+                    </p>
+                  )}
+
+                  {/* Progress */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        {stageCount > 0
+                          ? `${stageCount} ${t('home.stages')}`
+                          : t('home.noStages')}
+                      </span>
+                      <span>{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-1.5" />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Recent activity for active project */}
       {hasActivity && (
         <div className="space-y-3">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
