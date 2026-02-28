@@ -1,152 +1,196 @@
 
 
-## Cronograma de Servicos
+## Modulo RDO (Relatorio Diario de Obra)
 
 ### Resumo
 
-Criar o modulo completo de Cronograma de Servicos com tabela no banco de dados, duas visualizacoes (Lista e Gantt simplificado), formulario de criacao/edicao de etapas, sistema de predecessores/dependencias, e acoes por etapa (editar, concluir, excluir com swipe).
+Criar o modulo completo de RDO com banco de dados (tabelas + storage bucket), listagem, criacao/edicao com upload de fotos, detalhe, resumo semanal e exportacao PDF com compartilhamento via WhatsApp, Telegram e email.
 
 ---
 
-### 1. Tabela no banco de dados: `stages`
+### 1. Banco de dados
 
-Criar tabela `stages` com as seguintes colunas:
+**Tabela `rdos`:**
 
 | Coluna | Tipo | Default | Nullable |
 |---|---|---|---|
 | id | uuid | gen_random_uuid() | No |
-| project_id | uuid | - | No (FK -> projects.id ON DELETE CASCADE) |
-| title | text | - | No |
-| description | text | '' | Yes |
-| service_type | text | 'general' | No |
-| environment | text | '' | Yes |
-| responsible_name | text | '' | Yes |
-| start_date | date | - | No |
-| end_date | date | - | No |
-| status | text | 'pending' | No |
-| progress | integer | 0 | No |
-| predecessor_id | uuid | null | Yes (FK -> stages.id ON DELETE SET NULL) |
+| project_id | uuid | FK -> projects.id CASCADE | No |
+| user_id | uuid | auth.uid() | No |
+| date | date | - | No |
+| activities | text | '' | Yes |
+| observations | text | '' | Yes |
 | created_at | timestamptz | now() | No |
 | updated_at | timestamptz | now() | No |
 
-RLS policies:
-- SELECT: owner do projeto pode ver
-- INSERT: owner do projeto pode criar
-- UPDATE: owner do projeto pode editar
-- DELETE: owner do projeto pode excluir
+Constraint UNIQUE em `(project_id, date)` para impedir duplicatas.
 
-Trigger `update_updated_at_column` na tabela.
+**Tabela `rdo_team_members`:**
+
+| Coluna | Tipo | Default | Nullable |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | No |
+| rdo_id | uuid | FK -> rdos.id CASCADE | No |
+| name | text | - | No |
+| role | text | '' | Yes |
+| hours_worked | numeric(4,1) | 0 | No |
+
+**Tabela `rdo_photos`:**
+
+| Coluna | Tipo | Default | Nullable |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | No |
+| rdo_id | uuid | FK -> rdos.id CASCADE | No |
+| storage_path | text | - | No |
+| caption | text | '' | Yes |
+| annotations_json | jsonb | null | Yes |
+| sort_order | integer | 0 | No |
+
+**Storage bucket**: `rdo-photos` (public) com RLS para que apenas o owner do projeto possa fazer upload/delete.
+
+**RLS**: Todas as tabelas com policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = rdos.project_id AND projects.owner_id = auth.uid())`.
 
 ### 2. Traducoes (i18n)
 
-Novas chaves em `pt-BR.json` e `en-US.json`:
+Novas chaves em ambos os locales:
 
 ```
-"schedule": {
-  "title": "Cronograma",
-  "addStage": "Adicionar Etapa",
-  "editStage": "Editar Etapa",
-  "viewList": "Lista",
-  "viewTimeline": "Linha do tempo",
-  "sortByDate": "Por data",
-  "sortByStatus": "Por status",
-  "noStages": "Nenhuma etapa cadastrada",
-  "noStagesDesc": "Adicione a primeira etapa do cronograma",
-  "stageTitle": "Titulo",
-  "startDate": "Data de inicio",
-  "endDate": "Data de fim",
-  "responsible": "Responsavel",
-  "serviceType": "Tipo de servico",
-  "environment": "Ambiente",
-  "description": "Descricao",
-  "status": "Status",
-  "progress": "Progresso",
-  "predecessor": "Predecessor",
-  "noPredecessor": "Nenhum",
-  "pending": "Pendente",
-  "in_progress": "Em andamento",
-  "completed": "Concluido",
-  "delayed": "Atrasado",
-  "markComplete": "Marcar como concluida",
-  "deleteConfirm": "Tem certeza que deseja excluir esta etapa?",
-  "predecessorWarning": "Esta etapa possui dependentes. Deseja aplicar a mesma alteracao de datas aos dependentes?",
-  "applyToDependents": "Aplicar aos dependentes",
-  "skipDependents": "Apenas esta etapa",
-  "selectPredecessor": "Vincular a uma etapa existente?"
+"rdo": {
+  "title": "Diario de Obra",
+  "newRdo": "Novo RDO",
+  "editRdo": "Editar RDO",
+  "date": "Data",
+  "activities": "Atividades realizadas",
+  "observations": "Observacoes gerais",
+  "team": "Equipe presente",
+  "addMember": "Adicionar membro",
+  "memberName": "Nome",
+  "memberRole": "Funcao",
+  "hoursWorked": "Horas",
+  "photos": "Fotos",
+  "addPhotos": "Adicionar fotos",
+  "caption": "Legenda",
+  "noRdos": "Nenhum RDO cadastrado",
+  "noRdosDesc": "Registre o primeiro relatorio diario",
+  "duplicateDate": "Ja existe um RDO nesta data. Deseja edita-lo?",
+  "editExisting": "Editar existente",
+  "weeklySummary": "Resumo da semana",
+  "export": "Exportar PDF",
+  "shareWhatsapp": "Enviar por WhatsApp",
+  "shareTelegram": "Enviar por Telegram",
+  "shareEmail": "Enviar por e-mail",
+  "annotate": "Anotar foto",
+  "deletePhoto": "Excluir foto",
+  "noFutureDate": "Nao e permitido data futura"
 }
 ```
 
-### 3. Hook `useStages`
+### 3. Hook `useRdos`
 
-Criar `src/hooks/useStages.ts`:
-- Usa React Query + Supabase para CRUD de stages por `project_id`
-- Funcoes: `fetchStages`, `createStage`, `updateStage`, `deleteStage`
-- Ao atualizar datas de uma etapa com dependentes, buscar todas as stages que tem `predecessor_id` igual a ela e retornar para a UI perguntar ao usuario
+Criar `src/hooks/useRdos.ts`:
+- React Query + Supabase CRUD para `rdos`, `rdo_team_members`, `rdo_photos`
+- `fetchRdos(projectId)`: lista ordenada por data desc, com contagem de fotos
+- `fetchRdoDetail(rdoId)`: RDO completo com team_members e photos
+- `createRdo`, `updateRdo`, `deleteRdo`
+- `checkDuplicateDate(projectId, date)`: retorna RDO existente ou null
+- `fetchWeeklySummary(projectId)`: agrega RDOs dos ultimos 7 dias
 
 ### 4. Componentes
 
-**`src/components/schedule/StageCard.tsx`** - Card de etapa para a visualizacao em lista:
-- Titulo, badge de status colorido (cinza/azul/verde/vermelho)
-- Barra de progresso inline com %
-- Datas inicio-fim, responsavel (avatar com iniciais), tipo de servico
-- Swipe left no mobile revela botoes editar/excluir (usando touch events)
-- Botao de menu (tres pontos) no desktop com opcoes: editar, marcar concluida, excluir
+**`src/components/rdo/RdoCard.tsx`** - Card para a listagem:
+- Data formatada, thumbnail da primeira foto (ou placeholder), resumo truncado das atividades
+- Badge com contagem de fotos e membros da equipe
+- Click navega para detalhe
 
-**`src/components/schedule/StageForm.tsx`** - Formulario Dialog/Drawer:
-- Campos: titulo, data inicio, data fim, responsavel, tipo de servico, ambiente, descricao, status inicial
-- Select de predecessor: lista todas as outras etapas do projeto
-- Validacao com react-hook-form + zod
-- Modo criacao e edicao
+**`src/components/rdo/RdoForm.tsx`** - Formulario Dialog/Drawer:
+- DatePicker (padrao = hoje, max = hoje, sem datas futuras)
+- Textarea para atividades
+- Lista dinamica de membros: campos nome, funcao, horas - botao "+ Adicionar membro"
+- Grid de upload de fotos: accept image/*, multiplo, preview em miniatura, caption por foto
+- Textarea para observacoes
+- Ao selecionar data, verifica duplicata e sugere editar existente
+- Validacao com zod
 
-**`src/components/schedule/GanttTimeline.tsx`** - Visualizacao Gantt simplificada:
-- Container com scroll horizontal
-- Eixo X: dias/semanas entre a menor data de inicio e maior data de fim
-- Cada etapa como barra horizontal colorida pelo status
-- Label do titulo na barra
-- Linhas de conexao simples (seta) entre predecessor e dependente
-- Click na barra abre o formulario de edicao
+**`src/components/rdo/PhotoAnnotator.tsx`** - Anotador de fotos:
+- Canvas overlay sobre a imagem
+- Ferramentas: pincel (cores/tamanhos), texto, borracha, desfazer
+- Salva anotacoes como JSON (coordenadas + strokes) no campo `annotations_json`
+- Renderiza anotacoes sobre a foto na visualizacao
 
-**`src/components/schedule/DependencyDialog.tsx`** - Dialog de confirmacao:
-- Aparece ao alterar datas de etapa que possui dependentes
-- Pergunta: "Deseja aplicar a mesma alteracao de datas aos dependentes?"
-- Opcoes: "Aplicar aos dependentes" / "Apenas esta etapa"
+**`src/components/rdo/RdoDetail.tsx`** - Tela de detalhe:
+- Todas as informacoes do RDO
+- Galeria de fotos expandivel (click para fullscreen com anotacoes)
+- Tabela de equipe presente
+- Botoes de acao: editar, exportar PDF, compartilhar
 
-### 5. Pagina SchedulePage reformulada
+**`src/components/rdo/WeeklySummary.tsx`** - Resumo semanal:
+- Agrega atividades dos ultimos 7 dias
+- Total de horas da equipe
+- Grid de todas as fotos do periodo
+- Botao de exportar PDF do resumo
 
-Reescrever `src/pages/SchedulePage.tsx`:
-- **Sem projeto ativo**: mostra mensagem pedindo para selecionar projeto
-- **Com projeto ativo**:
-  - Toggle no topo: Lista | Linha do tempo (usando Tabs do shadcn)
-  - Botao de ordenacao: por data (padrao) ou por status
-  - Botao "+ Adicionar Etapa" no topo
-  - Tab Lista: renderiza StageCards
-  - Tab Timeline: renderiza GanttTimeline
-  - Estado vazio: ilustracao + CTA
+**`src/components/rdo/RdoExportMenu.tsx`** - Menu de exportacao:
+- Gera PDF client-side usando a API de print do browser (window.print com CSS @media print) ou uma div oculta renderizada como PDF
+- Opcoes de compartilhamento:
+  - WhatsApp: `https://wa.me/?text=...` com link do PDF ou texto resumido
+  - Telegram: `https://t.me/share/url?url=...&text=...`
+  - Email: `mailto:?subject=...&body=...`
+- Nota: como nao ha servidor para hospedar PDFs, o fluxo sera gerar o PDF no browser, o usuario salva/compartilha manualmente, ou usa Web Share API quando disponivel
+
+### 5. Pagina RdoPage
+
+Criar `src/pages/RdoPage.tsx`:
+- Sem projeto ativo: mensagem pedindo selecionar projeto
+- Lista de RDOs ordenada por data (mais recente primeiro)
+- Botao "+ Novo RDO" no topo
+- Botao "Resumo da semana" no topo
+- Click no card abre detalhe
 
 ### 6. Roteamento
 
-A rota `/schedule` ja existe no `App.tsx`. O modulo de cronograma tambem sera acessivel pelo atalho na tela de detalhe do projeto (`ProjectDetailPage`), que navegara para `/schedule` setando o projeto ativo.
+Adicionar em `App.tsx`:
+- `/rdo` - RdoPage (listagem)
+- `/rdo/:id` - RdoDetail (detalhe)
+
+Atualizar `ProjectDetailPage` para que o atalho "RDO" navegue para `/rdo`.
+
+### 7. Exportacao PDF
+
+Abordagem client-side usando `window.print()` com CSS `@media print`:
+- Componente `RdoPrintView` renderiza o RDO em formato imprimivel
+- O usuario usa "Salvar como PDF" do dialogo de impressao do browser
+- Web Share API (`navigator.share()`) para compartilhar diretamente quando disponivel no mobile
+- Fallback para links diretos WhatsApp/Telegram/email com texto resumido do RDO
 
 ---
 
 ### Detalhes Tecnicos
 
-- **Swipe-to-action**: Touch events simples (onTouchStart/Move/End) que detecta swipe esquerdo > 80px para revelar botoes de acao. Sem biblioteca externa.
-- **Gantt**: Implementacao custom com divs posicionadas. Calculo de posicao: `(stageStart - timelineStart) / totalDays * 100%` para left, `(stageEnd - stageStart) / totalDays * 100%` para width.
-- **Predecessores**: Ao salvar alteracao de datas, o hook verifica se existem stages com `predecessor_id = stage.id`. Se sim, retorna a lista para o componente exibir o DependencyDialog. Se o usuario confirmar, aplica o mesmo delta de dias a todos os dependentes recursivamente.
-- **Status automatico "Atrasado"**: Na query, stages com `end_date < today` e `status != 'completed'` sao exibidas com badge "Atrasado" (calculado no frontend, nao salvo no banco).
-- **React Query**: invalidate queries apos mutations para manter dados sincronizados.
+- **Upload de fotos**: Usa Supabase Storage com bucket `rdo-photos`. Path: `{project_id}/{rdo_id}/{uuid}.jpg`. Upload via `supabase.storage.from('rdo-photos').upload()`.
+- **Anotacoes**: Canvas HTML5 com `getContext('2d')`. Strokes salvos como array de pontos `{x, y, color, width}` em JSON. Para texto, posicao `{x, y, text, fontSize, color}`. Renderizado sobre a imagem no detalhe.
+- **Duplicata de data**: Query `select id from rdos where project_id = ? and date = ?` antes de abrir form de criacao.
+- **Resumo semanal**: Query com filtro `date >= today - 7 days`, agrega no frontend.
+- **PDF via print**: Componente hidden com `@media print` que mostra apenas o conteudo do RDO formatado. Alternativa: usar `html2canvas` + `jspdf` se precisar de PDF real para compartilhar (requer instalar dependencias extras).
 
 ### Arquivos a criar
-- `src/hooks/useStages.ts`
-- `src/components/schedule/StageCard.tsx`
-- `src/components/schedule/StageForm.tsx`
-- `src/components/schedule/GanttTimeline.tsx`
-- `src/components/schedule/DependencyDialog.tsx`
+- `src/hooks/useRdos.ts`
+- `src/pages/RdoPage.tsx`
+- `src/components/rdo/RdoCard.tsx`
+- `src/components/rdo/RdoForm.tsx`
+- `src/components/rdo/RdoDetail.tsx`
+- `src/components/rdo/PhotoAnnotator.tsx`
+- `src/components/rdo/WeeklySummary.tsx`
+- `src/components/rdo/RdoExportMenu.tsx`
+- `src/components/rdo/RdoPrintView.tsx`
 
 ### Arquivos a modificar
-- `public/locales/pt-BR.json` (novas chaves schedule)
-- `public/locales/en-US.json` (novas chaves schedule)
-- `src/pages/SchedulePage.tsx` (reescrever completo)
-- `src/pages/ProjectDetailPage.tsx` (atalho cronograma navega para /schedule)
+- `src/App.tsx` (novas rotas)
+- `src/pages/ProjectDetailPage.tsx` (atalho RDO navega para /rdo)
+- `public/locales/pt-BR.json` (novas chaves rdo)
+- `public/locales/en-US.json` (novas chaves rdo)
+
+### Migracoes de banco
+- Criar tabelas `rdos`, `rdo_team_members`, `rdo_photos` com RLS
+- Criar bucket `rdo-photos` com policies de storage
+- Trigger `update_updated_at_column` na tabela `rdos`
 
