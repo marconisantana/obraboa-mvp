@@ -1,159 +1,131 @@
 
 
-## Caderno de Referencias - Moodboard de Imagens
+## Perfil e Configuracoes - Tela Completa
 
 ### Resumo
 
-Criar um modulo de referencias visuais estilo Pinterest, onde usuarios podem salvar imagens inspiracionais por projeto, organizadas por categorias (Sala, Cozinha, Banheiro, etc.), com upload local, URL externa e observacoes editaveis.
+Reescrever a tela de Perfil com secoes completas: avatar com upload, dados pessoais editaveis, lista de projetos com criar/arquivar, plano atual com tela de upgrade, sobre o app e logout. Tambem criar um bucket de storage para avatares.
 
 ---
 
-### 1. Banco de dados
+### 1. Banco de dados / Storage
 
-**Tabela `references`:**
+**Storage bucket**: `avatars` (public). Necessario para upload de foto de perfil.
 
-| Coluna | Tipo | Default | Nullable |
-|---|---|---|---|
-| id | uuid | gen_random_uuid() | No |
-| project_id | uuid | FK -> projects.id CASCADE | No |
-| user_id | uuid | auth.uid() | No |
-| image_url | text | - | No |
-| storage_path | text | null | Yes |
-| category | text | 'outros' | No |
-| observation | text | '' | Yes |
-| created_at | timestamptz | now() | No |
+RLS no bucket: permitir que usuarios autenticados facam upload/delete de seus proprios avatares (path baseado em `auth.uid()`).
 
-- `image_url`: URL publica (do storage ou URL externa)
-- `storage_path`: preenchido apenas quando o upload e local (para poder deletar do storage)
-
-**Storage bucket**: `reference-images` (public).
-
-**RLS**: Policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = references.project_id AND projects.owner_id = auth.uid())` para SELECT, INSERT, UPDATE e DELETE.
+Nenhuma tabela nova necessaria - o campo `avatar_url` ja existe na tabela `profiles`.
 
 ---
 
-### 2. Traducoes (i18n)
+### 2. Atualizar PlanType no Store
 
-Novas chaves `references` em `pt-BR.json` e `en-US.json`:
+Atualizar `src/stores/useAppStore.ts`:
+- Adicionar tipo `'flipper'` ao `PlanType`: `'free' | 'basic' | 'flipper' | 'pro'`
+- Atualizar `FEATURE_ACCESS` com as permissoes do plano Flipper (igual ao basic + `financial_module`)
+- Adicionar novas feature keys se necessario: `'financial_module'` ja existe
+
+---
+
+### 3. Traducoes (i18n)
+
+Novas chaves `profile` em ambos os locales:
 
 ```text
-"references": {
-  "title": "Referencias",
-  "new": "Nova referencia",
-  "addFromUrl": "Adicionar por URL",
-  "uploadImage": "Enviar imagem",
-  "imageUrl": "URL da imagem",
-  "observation": "Observacao",
-  "category": "Categoria",
-  "all": "Todos",
-  "livingRoom": "Sala",
-  "kitchen": "Cozinha",
-  "bathroom": "Banheiro",
-  "bedroom": "Quarto",
-  "facade": "Fachada",
-  "other": "Outros",
-  "noReferences": "Nenhuma referencia salva",
-  "noReferencesDesc": "Salve imagens de inspiracao para sua obra",
-  "deleteConfirm": "Tem certeza que deseja excluir esta referencia?",
-  "share": "Compartilhar",
-  "selectProject": "Selecione um projeto para ver as referencias",
-  "preview": "Pre-visualizar",
-  "invalidUrl": "URL invalida"
+"profile": {
+  "title": "Meu Perfil",
+  "editProfile": "Editar perfil",
+  "save": "Salvar",
+  "avatar": "Foto de perfil",
+  "changeAvatar": "Alterar foto",
+  "myProjects": "Meus projetos",
+  "createProject": "Criar novo projeto",
+  "archiveProject": "Arquivar",
+  "myPlan": "Meu plano",
+  "freePlan": "Gratuito",
+  "viewPlans": "Ver planos",
+  "upgradePlans": "Escolha seu plano",
+  "currentPlan": "Plano atual",
+  "planFree": "Gratuito",
+  "planBasic": "Basic",
+  "planFlipper": "Flipper",
+  "planPro": "Pro",
+  "planFreeDesc": "1 projeto, 1 membro, sem exportacao PDF",
+  "planBasicDesc": "Ate 3 projetos, 3 membros, exportacao PDF",
+  "planFlipperDesc": "Ate 3 projetos, 5 membros, exportacao PDF, modulo financeiro",
+  "planProDesc": "Ate 10 projetos, 10 membros, todos os modulos",
+  "projectLimit": "{{count}} projeto(s)",
+  "memberLimit": "{{count}} membro(s)",
+  "pdfExport": "Exportacao PDF",
+  "financialModule": "Modulo financeiro",
+  "allModules": "Todos os modulos",
+  "aboutApp": "Sobre o app",
+  "version": "Versao",
+  "termsOfUse": "Termos de uso",
+  "privacyPolicy": "Politica de privacidade",
+  "logout": "Sair da conta",
+  "uploadingAvatar": "Enviando foto..."
 }
 ```
 
 ---
 
-### 3. Hook `useReferences`
-
-Criar `src/hooks/useReferences.ts`:
-
-- `fetchReferences(projectId, category?)`: lista referencias, com filtro opcional por categoria
-- `createFromUpload(projectId, file, category, observation)`: upload para bucket `reference-images` + insert
-- `createFromUrl(projectId, imageUrl, category, observation)`: insert direto com URL externa
-- `updateObservation(refId, observation)`: atualiza observacao
-- `updateCategory(refId, category)`: atualiza categoria
-- `deleteReference(refId)`: remove do storage (se storage_path) + deleta do banco
-
----
-
 ### 4. Componentes
 
-**`src/components/references/ReferenceCard.tsx`:**
-- Card com imagem (aspect-ratio livre, masonry), badge de categoria colorido, preview truncado da observacao
-- Click abre modal de detalhe
-- Layout pensado para grid masonry
+**`src/components/profile/AvatarUpload.tsx`:**
+- Avatar circular grande (80px) com foto ou iniciais
+- Botao "Alterar foto" sobreposto ou abaixo
+- Input file hidden (accept="image/*")
+- Ao selecionar: upload para bucket `avatars/{user_id}.jpg`, atualiza `profiles.avatar_url`
+- Loading state durante upload
 
-**`src/components/references/ReferenceDetailDialog.tsx`:**
-- Modal com imagem em destaque (grande)
-- Campo de observacao editavel (textarea com auto-save ou botao salvar)
-- Select de categoria editavel
-- Botoes: compartilhar, excluir
+**`src/components/profile/PlanCard.tsx`:**
+- Card mostrando plano atual com badge colorido
+- Botao "Ver planos" que abre drawer/dialog com cards dos 4 planos
+- Cada card de plano: nome, preco (placeholder), lista de features, botao "Selecionar" (apenas visual, sem pagamento real por enquanto)
 
-**`src/components/references/AddReferenceDialog.tsx`:**
-- Dialog com duas abas: "Enviar imagem" e "Adicionar por URL"
-- Aba upload: input file (accept images) + preview da imagem selecionada
-- Aba URL: input de URL + botao preview (carrega `<img>` para validar)
-- Select de categoria
-- Campo de observacao (opcional)
-- Botao salvar
+**`src/components/profile/ProjectListSection.tsx`:**
+- Secao "Meus projetos" com lista compacta dos projetos
+- Cada item: nome + status badge + botao arquivar (muda status para 'cancelled')
+- Botao "+ Criar novo projeto" que abre o drawer de criacao (reutilizar logica do ProjectsPage)
 
-**`src/components/references/CategoryFilter.tsx`:**
-- Barra horizontal com chips/badges filtraveis
-- Categorias: Todos | Sala | Cozinha | Banheiro | Quarto | Fachada | Outros
-- Click em uma categoria filtra o grid
+**`src/components/profile/AboutSection.tsx`:**
+- Card com versao do app (hardcoded "1.0.0")
+- Links: Termos de uso, Politica de privacidade (placeholder URLs)
 
 ---
 
-### 5. Pagina ReferencesPage
+### 5. Reescrever ProfilePage
 
-Criar `src/pages/ReferencesPage.tsx`:
+`src/pages/ProfilePage.tsx` com layout:
 
-- Sem projeto ativo: mensagem pedindo selecionar
-- Header com titulo + botao "+ Nova referencia"
-- Barra de filtro de categorias (CategoryFilter)
-- Grid masonry: CSS columns (2 colunas mobile, 3 desktop) com `break-inside: avoid`
-- Cada card renderiza ReferenceCard
-- Estado vazio com ilustracao e CTA
-
----
-
-### 6. Roteamento e Navegacao
-
-- Adicionar rota `/references` em `App.tsx` (dentro das rotas protegidas com AppLayout)
-- Adicionar modulo "Referencias" no grid de atalhos do `ProjectDetailPage` com icone `ImagePlus` ou `Images`
-- Adicionar na navegacao lateral/bottom se aplicavel
-
----
-
-### 7. Compartilhamento
-
-- Botao compartilhar no detalhe: usa Web Share API (`navigator.share`) com a URL da imagem + texto da observacao
-- Fallback: copiar link da imagem para clipboard
+1. **Avatar + Nome + Email + Tipo de conta** (header com AvatarUpload)
+2. **Edicao de perfil** (nome editavel inline)
+3. **Meus projetos** (ProjectListSection)
+4. **Meu plano** (PlanCard)
+5. **Sobre o app** (AboutSection)
+6. **Botao Sair** (sempre visivel, nao apenas mobile)
 
 ---
 
 ### Detalhes Tecnicos
 
-- **Masonry CSS**: Usar `columns: 2` (mobile) / `columns: 3` (desktop) com `break-inside: avoid` em cada card. Simples e sem dependencia extra.
-- **Upload**: Bucket `reference-images`, path `{project_id}/{uuid}.{ext}`. Gera URL publica apos upload.
-- **URL externa**: Valida carregando a imagem em um `<img>` onerror/onload antes de salvar.
-- **Categorias**: Array fixo no frontend. O campo `category` e texto livre, permitindo expansao futura.
-- **Badge de categoria**: Cores mapeadas por categoria (azul=Sala, verde=Cozinha, rosa=Banheiro, etc.).
-- **Auto-save observacao**: Debounce de 1s no textarea do detalhe, ou botao salvar explicito.
+- **Upload de avatar**: Path `avatars/{user_id}.jpg`. Sobrescreve o anterior (upsert: true). Gera URL publica e salva em `profiles.avatar_url`.
+- **Planos**: Apenas visual por enquanto. Nao ha integracao com pagamento. O `PlanType` no store continua como `'free'` ate implementar billing.
+- **Arquivar projeto**: Altera status para `'cancelled'` via supabase update. Nao deleta.
+- **Drawer de criacao de projeto**: Pode-se extrair o form do ProjectsPage em um componente reutilizavel, ou simplesmente navegar para `/projects` com query param para abrir o drawer.
+- **Responsividade**: Layout em coluna unica, funciona bem em mobile e desktop.
 
 ### Arquivos a criar
-- Migracao SQL (1 tabela + bucket + RLS)
-- `src/hooks/useReferences.ts`
-- `src/components/references/ReferenceCard.tsx`
-- `src/components/references/ReferenceDetailDialog.tsx`
-- `src/components/references/AddReferenceDialog.tsx`
-- `src/components/references/CategoryFilter.tsx`
-- `src/pages/ReferencesPage.tsx`
+- Migracao SQL (bucket `avatars` + RLS de storage)
+- `src/components/profile/AvatarUpload.tsx`
+- `src/components/profile/PlanCard.tsx`
+- `src/components/profile/ProjectListSection.tsx`
+- `src/components/profile/AboutSection.tsx`
 
 ### Arquivos a modificar
-- `src/App.tsx` (nova rota /references)
-- `src/pages/ProjectDetailPage.tsx` (adicionar atalho "Referencias" no grid de modulos)
-- `public/locales/pt-BR.json` (novas chaves references)
-- `public/locales/en-US.json` (novas chaves references)
+- `src/pages/ProfilePage.tsx` (reescrever completamente)
+- `src/stores/useAppStore.ts` (adicionar PlanType 'flipper')
+- `public/locales/pt-BR.json` (novas chaves profile)
+- `public/locales/en-US.json` (novas chaves profile)
 
