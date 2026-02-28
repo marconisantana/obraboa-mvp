@@ -147,6 +147,8 @@ export default function ProjectDetailPage() {
                 navigate('/schedule');
               } else if (key === 'rdo') {
                 navigate('/rdo');
+              } else if (key === 'checklists') {
+                navigate('/checklists');
               } else {
                 toast({ title: t('common.comingSoon') });
               }

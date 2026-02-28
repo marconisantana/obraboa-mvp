@@ -49,6 +49,120 @@ export type Database = {
           },
         ]
       }
+      checklist_item_photos: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_item_photos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_items: {
+        Row: {
+          checked: boolean
+          checklist_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          responsible_name: string | null
+          sort_order: number
+          text: string
+        }
+        Insert: {
+          checked?: boolean
+          checklist_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          responsible_name?: string | null
+          sort_order?: number
+          text: string
+        }
+        Update: {
+          checked?: boolean
+          checklist_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          responsible_name?: string | null
+          sort_order?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklists: {
+        Row: {
+          created_at: string
+          due_date: string | null
+          id: string
+          name: string
+          project_id: string
+          responsible_name: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          name: string
+          project_id: string
+          responsible_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          responsible_name?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklists_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: string
