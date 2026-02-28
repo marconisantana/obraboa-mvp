@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "ObraBoa",
+    "tagline": "O assistente da sua Obra"
+  },
+  "nav": {
+    "home": "Início",
+    "projects": "Projetos",
+    "schedule": "Cronograma",
+    "documents": "Documentos",
+    "profile": "Perfil"
+  },
+  "auth": {
+    "login": "Entrar",
+    "signup": "Criar conta",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "confirmPassword": "Confirmar senha",
+    "fullName": "Nome completo",
+    "accountType": "Tipo de conta",
+    "personal": "Pessoal",
+    "professional": "Profissional",
+    "personalDesc": "Pessoa física ou flipper",
+    "professionalDesc": "Arquiteto, engenheiro, construtora",
+    "forgotPassword": "Esqueceu a senha?",
+    "resetPassword": "Redefinir senha",
+    "newPassword": "Nova senha",
+    "sendResetLink": "Enviar link de redefinição",
+    "resetSent": "Link enviado! Verifique seu e-mail.",
+    "noAccount": "Não tem conta?",
+    "hasAccount": "Já tem conta?",
+    "loginWithGoogle": "Entrar com Google",
+    "orContinueWith": "ou continue com",
+    "passwordMinLength": "A senha deve ter pelo menos 6 caracteres",
+    "passwordsMustMatch": "As senhas devem ser iguais",
+    "emailRequired": "E-mail é obrigatório",
+    "nameRequired": "Nome é obrigatório",
+    "checkEmail": "Verifique seu e-mail para confirmar o cadastro"
+  },
+  "projects": {
+    "title": "Meus Projetos",
+    "new": "Nova Obra",
+    "edit": "Editar Obra",
+    "name": "Nome da obra",
+    "address": "Endereço",
+    "startDate": "Data de início",
+    "endDate": "Data prevista de término",
+    "status": "Status",
+    "planning": "Planejamento",
+    "inProgress": "Em andamento",
+    "paused": "Pausada",
+    "completed": "Concluída",
+    "cancelled": "Cancelada",
+    "noProjects": "Nenhum projeto ainda",
+    "createFirst": "Crie seu primeiro projeto para começar",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "confirmDelete": "Tem certeza que deseja excluir este projeto?",
+    "members": "Membros",
+    "active": "Ativa"
+  },
+  "profile": {
+    "title": "Meu Perfil",
+    "editProfile": "Editar perfil",
+    "save": "Salvar",
+    "avatar": "Foto de perfil",
+    "changeAvatar": "Alterar foto"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "create": "Criar",
+    "back": "Voltar",
+    "search": "Buscar",
+    "noResults": "Nenhum resultado encontrado",
+    "error": "Ocorreu um erro",
+    "success": "Sucesso!",
+    "confirm": "Confirmar"
+  },
+  "home": {
+    "welcome": "Bem-vindo ao ObraBoa",
+    "selectProject": "Selecione um projeto para começar",
+    "recentActivity": "Atividade recente",
+    "noActivity": "Nenhuma atividade recente"
+  },
+  "schedule": {
+    "title": "Cronograma",
+    "comingSoon": "Em breve"
+  },
+  "documents": {
+    "title": "Documentos",
+    "comingSoon": "Em breve"
+  }
+}
