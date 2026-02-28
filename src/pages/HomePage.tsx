@@ -3,37 +3,110 @@ import { useAppStore } from '@/stores/useAppStore';
 import { Card, CardContent } from '@/components/ui/card';
 import { FolderKanban, FileText, CheckSquare, CalendarDays, ShoppingCart, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { mockActivities, type MockActivity } from '@/data/mockActivities';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-const typeIcons: Record<MockActivity['type'], typeof FileText> = {
+const typeIcons: Record<string, typeof FileText> = {
   rdo: FileText,
   checklist: CheckSquare,
   schedule: CalendarDays,
   purchase_order: ShoppingCart,
 };
 
-const typeColors: Record<MockActivity['type'], string> = {
+const typeColors: Record<string, string> = {
   rdo: 'bg-blue-100 text-blue-600',
   checklist: 'bg-emerald-100 text-emerald-600',
   schedule: 'bg-violet-100 text-violet-600',
   purchase_order: 'bg-amber-100 text-amber-600',
 };
 
+interface ActivityWithProfile {
+  id: string;
+  type: string;
+  description: string;
+  created_at: string;
+  user_id: string;
+  userName: string;
+  userInitials: string;
+}
+
 export default function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAppStore((s) => s.user);
   const activeProject = useAppStore((s) => s.activeProject);
   const projects = useAppStore((s) => s.projects);
   const navigate = useNavigate();
+
+  const [activities, setActivities] = useState<ActivityWithProfile[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
 
   // Pull-to-refresh
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const fetchActivities = useCallback(async () => {
+    if (!activeProject) {
+      setActivities([]);
+      return;
+    }
+    setLoadingActivities(true);
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('project_id', activeProject.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // Fetch profile names for user_ids
+      const userIds = [...new Set((data ?? []).map((a) => a.user_id))];
+      let profileMap: Record<string, { full_name: string }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', userIds);
+        if (profiles) {
+          profileMap = Object.fromEntries(profiles.map((p) => [p.user_id, { full_name: p.full_name }]));
+        }
+      }
+
+      setActivities(
+        (data ?? []).map((a) => {
+          const name = profileMap[a.user_id]?.full_name || '';
+          const initials = name
+            .split(' ')
+            .map((w) => w[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+          return {
+            id: a.id,
+            type: a.type,
+            description: a.description,
+            created_at: a.created_at,
+            user_id: a.user_id,
+            userName: name,
+            userInitials: initials,
+          };
+        })
+      );
+    } catch {
+      setActivities([]);
+    } finally {
+      setLoadingActivities(false);
+    }
+  }, [activeProject]);
+
+  useEffect(() => {
+    fetchActivities();
+  }, [fetchActivities]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (containerRef.current && containerRef.current.scrollTop === 0) {
@@ -52,15 +125,17 @@ export default function HomePage() {
   const handleTouchEnd = useCallback(() => {
     if (pullDistance > 60) {
       setRefreshing(true);
-      setTimeout(() => {
+      fetchActivities().finally(() => {
         setRefreshing(false);
         setPullDistance(0);
-      }, 1000);
+      });
     } else {
       setPullDistance(0);
     }
     touchStartY.current = 0;
-  }, [pullDistance]);
+  }, [pullDistance, fetchActivities]);
+
+  const dateLocale = i18n.language === 'pt-BR' ? ptBR : undefined;
 
   // No projects at all
   if (projects.length === 0) {
@@ -85,8 +160,7 @@ export default function HomePage() {
     );
   }
 
-  // Has projects but none selected or empty feed
-  const hasActivity = activeProject && mockActivities.length > 0;
+  const hasActivity = activeProject && activities.length > 0;
 
   return (
     <div
@@ -96,12 +170,8 @@ export default function HomePage() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Pull-to-refresh indicator */}
       {pullDistance > 0 && (
-        <div
-          className="flex items-center justify-center transition-all"
-          style={{ height: pullDistance }}
-        >
+        <div className="flex items-center justify-center transition-all" style={{ height: pullDistance }}>
           <RefreshCw
             size={20}
             className={`text-muted-foreground ${refreshing ? 'animate-spin' : ''}`}
@@ -123,7 +193,7 @@ export default function HomePage() {
         <p className="text-muted-foreground">{t('home.selectProject')}</p>
       )}
 
-      {activeProject && !hasActivity && (
+      {activeProject && !hasActivity && !loadingActivities && (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center p-8 text-center">
             <CalendarDays size={48} className="mb-3 text-muted-foreground/50" />
@@ -138,27 +208,24 @@ export default function HomePage() {
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             {t('home.recentActivity')}
           </h2>
-          {mockActivities.map((activity) => {
-            const Icon = typeIcons[activity.type];
-            const colorClass = typeColors[activity.type];
+          {activities.map((activity) => {
+            const Icon = typeIcons[activity.type] || FileText;
+            const colorClass = typeColors[activity.type] || 'bg-muted text-muted-foreground';
             return (
               <Card key={activity.id}>
                 <CardContent className="flex items-start gap-3 p-4">
-                  {/* Avatar */}
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                     {activity.userInitials}
                   </div>
-                  {/* Content */}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm">
                       <span className="font-semibold">{activity.userName}</span>{' '}
                       {activity.description}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatDistanceToNow(activity.createdAt, { addSuffix: true, locale: ptBR })}
+                      {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: dateLocale })}
                     </p>
                   </div>
-                  {/* Category icon */}
                   <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
                     <Icon size={16} />
                   </div>
