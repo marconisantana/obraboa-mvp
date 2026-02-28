@@ -1,131 +1,132 @@
 
 
-## Perfil e Configuracoes - Tela Completa
+## Substituir Mocks por Supabase + Evoluir Schema
 
-### Resumo
+### Contexto
 
-Reescrever a tela de Perfil com secoes completas: avatar com upload, dados pessoais editaveis, lista de projetos com criar/arquivar, plano atual com tela de upgrade, sobre o app e logout. Tambem criar um bucket de storage para avatares.
+O app ja usa Supabase para a maioria dos dados (projetos, RDOs, checklists, dossiers, documentos, referencias, compras). Os unicos mocks restantes sao:
 
----
+1. **`mockActivities`** no HomePage - feed de atividades hardcoded
+2. **`mockMembers`** no ProjectDetailPage - membros do projeto hardcoded
+3. **`MOCK_PROGRESS`** no ProjectDetailPage - progresso hardcoded (35%)
 
-### 1. Banco de dados / Storage
+### Abordagem
 
-**Storage bucket**: `avatars` (public). Necessario para upload de foto de perfil.
+O schema proposto tem nomes de colunas e tabelas diferentes do existente (ex: `owner_id` vs `created_by`, `stages` vs `schedule_tasks`, `dossiers` vs `dossies`). Renomear tabelas/colunas existentes quebraria todo o codigo do app. A abordagem sera:
 
-RLS no bucket: permitir que usuarios autenticados facam upload/delete de seus proprios avatares (path baseado em `auth.uid()`).
-
-Nenhuma tabela nova necessaria - o campo `avatar_url` ja existe na tabela `profiles`.
-
----
-
-### 2. Atualizar PlanType no Store
-
-Atualizar `src/stores/useAppStore.ts`:
-- Adicionar tipo `'flipper'` ao `PlanType`: `'free' | 'basic' | 'flipper' | 'pro'`
-- Atualizar `FEATURE_ACCESS` com as permissoes do plano Flipper (igual ao basic + `financial_module`)
-- Adicionar novas feature keys se necessario: `'financial_module'` ja existe
+1. **Criar tabelas novas** que nao existem: `project_members`, `project_invites`
+2. **Adicionar colunas faltantes** em tabelas existentes (ex: `weather` em `rdos`, `unit_price` em `purchase_order_items`)
+3. **Substituir os 3 mocks** por dados reais do Supabase
+4. **Criar bucket** `project-covers` (publico)
+5. **Atualizar RLS** para ser baseada em membership (via `project_members`)
+6. **Auto-criar membership** como owner ao criar projeto
 
 ---
 
-### 3. Traducoes (i18n)
+### 1. Migracao SQL
 
-Novas chaves `profile` em ambos os locales:
+**Novas tabelas:**
 
 ```text
-"profile": {
-  "title": "Meu Perfil",
-  "editProfile": "Editar perfil",
-  "save": "Salvar",
-  "avatar": "Foto de perfil",
-  "changeAvatar": "Alterar foto",
-  "myProjects": "Meus projetos",
-  "createProject": "Criar novo projeto",
-  "archiveProject": "Arquivar",
-  "myPlan": "Meu plano",
-  "freePlan": "Gratuito",
-  "viewPlans": "Ver planos",
-  "upgradePlans": "Escolha seu plano",
-  "currentPlan": "Plano atual",
-  "planFree": "Gratuito",
-  "planBasic": "Basic",
-  "planFlipper": "Flipper",
-  "planPro": "Pro",
-  "planFreeDesc": "1 projeto, 1 membro, sem exportacao PDF",
-  "planBasicDesc": "Ate 3 projetos, 3 membros, exportacao PDF",
-  "planFlipperDesc": "Ate 3 projetos, 5 membros, exportacao PDF, modulo financeiro",
-  "planProDesc": "Ate 10 projetos, 10 membros, todos os modulos",
-  "projectLimit": "{{count}} projeto(s)",
-  "memberLimit": "{{count}} membro(s)",
-  "pdfExport": "Exportacao PDF",
-  "financialModule": "Modulo financeiro",
-  "allModules": "Todos os modulos",
-  "aboutApp": "Sobre o app",
-  "version": "Versao",
-  "termsOfUse": "Termos de uso",
-  "privacyPolicy": "Politica de privacidade",
-  "logout": "Sair da conta",
-  "uploadingAvatar": "Enviando foto..."
-}
+project_members (id, project_id, profile_id, role, joined_at)
+  - UNIQUE(project_id, profile_id)
+  - role: 'owner' | 'professional' | 'client' | 'viewer'
+  - RLS: membros podem ver membros do mesmo projeto
+
+project_invites (id, project_id, invited_by, role, token, expires_at, used_at, created_at)
+  - RLS: owner/professional podem criar e ver convites
 ```
 
----
+**Colunas novas em tabelas existentes:**
 
-### 4. Componentes
+- `rdos`: adicionar coluna `weather` (text, nullable)
+- `purchase_order_items`: adicionar coluna `unit_price` (numeric, default 0)
 
-**`src/components/profile/AvatarUpload.tsx`:**
-- Avatar circular grande (80px) com foto ou iniciais
-- Botao "Alterar foto" sobreposto ou abaixo
-- Input file hidden (accept="image/*")
-- Ao selecionar: upload para bucket `avatars/{user_id}.jpg`, atualiza `profiles.avatar_url`
-- Loading state durante upload
+**Auto-membership trigger:**
+- Ao inserir um projeto, automaticamente cria um `project_member` com role='owner'
 
-**`src/components/profile/PlanCard.tsx`:**
-- Card mostrando plano atual com badge colorido
-- Botao "Ver planos" que abre drawer/dialog com cards dos 4 planos
-- Cada card de plano: nome, preco (placeholder), lista de features, botao "Selecionar" (apenas visual, sem pagamento real por enquanto)
+**Funcao helper para RLS:**
+- `is_project_member(project_id, user_id)` - retorna boolean
+- `get_project_role(project_id, user_id)` - retorna role
 
-**`src/components/profile/ProjectListSection.tsx`:**
-- Secao "Meus projetos" com lista compacta dos projetos
-- Cada item: nome + status badge + botao arquivar (muda status para 'cancelled')
-- Botao "+ Criar novo projeto" que abre o drawer de criacao (reutilizar logica do ProjectsPage)
+**Migrar projetos existentes:**
+- INSERT INTO project_members para cada projeto existente (owner_id -> profile com user_id correspondente)
 
-**`src/components/profile/AboutSection.tsx`:**
-- Card com versao do app (hardcoded "1.0.0")
-- Links: Termos de uso, Politica de privacidade (placeholder URLs)
+**Bucket:**
+- `project-covers` (publico)
 
 ---
 
-### 5. Reescrever ProfilePage
+### 2. Atualizar RLS (member-based)
 
-`src/pages/ProfilePage.tsx` com layout:
+Trocar todas as policies de `projects.owner_id = auth.uid()` para membership-based:
 
-1. **Avatar + Nome + Email + Tipo de conta** (header com AvatarUpload)
-2. **Edicao de perfil** (nome editavel inline)
-3. **Meus projetos** (ProjectListSection)
-4. **Meu plano** (PlanCard)
-5. **Sobre o app** (AboutSection)
-6. **Botao Sair** (sempre visivel, nao apenas mobile)
+- **projects SELECT**: usuario e membro do projeto
+- **projects UPDATE/DELETE**: role = 'owner'
+- **projects INSERT**: manter (auth.uid() = owner_id)
+- **Tabelas filhas** (rdos, checklists, stages, etc.): SELECT para qualquer membro, INSERT/UPDATE/DELETE para owner ou professional
+
+Usar funcao `is_project_member()` para evitar recursao infinita.
+
+---
+
+### 3. Substituir Mocks
+
+**HomePage - Feed de Atividades:**
+- Remover import de `mockActivities`
+- Usar query real: `supabase.from('activities').select('*').eq('project_id', activeProject.id).order('created_at', { ascending: false }).limit(20)`
+- Buscar nome do usuario via profiles join ou armazenar no campo description
+- Mostrar estado vazio se nao houver atividades
+
+**ProjectDetailPage - Membros:**
+- Remover `mockMembers`
+- Query: `supabase.from('project_members').select('*, profiles(full_name, avatar_url)').eq('project_id', id)` (usando join com profiles via profile_id -> profiles.id por user_id)
+- Renderizar avatares reais dos membros
+
+**ProjectDetailPage - Progresso:**
+- Remover `MOCK_PROGRESS`
+- Calcular progresso real a partir dos stages: media ponderada de `stages.progress` para o projeto
+- Se nao houver stages, mostrar 0%
+
+---
+
+### 4. Arquivos a Modificar
+
+**Migracao SQL** (1 arquivo):
+- Criar `project_members`, `project_invites`
+- Adicionar colunas `weather` e `unit_price`
+- Criar funcoes helper de RLS
+- Criar trigger auto-membership
+- Migrar owners existentes para project_members
+- Dropar policies antigas, criar novas member-based
+- Criar bucket `project-covers`
+
+**`src/pages/HomePage.tsx`**:
+- Remover import de mockActivities
+- Adicionar useEffect/useQuery para buscar atividades reais
+- Adaptar renderizacao para dados reais (sem userInitials mock)
+
+**`src/pages/ProjectDetailPage.tsx`**:
+- Remover mockMembers e MOCK_PROGRESS
+- Adicionar queries para membros reais e progresso calculado
+- Renderizar avatares reais
+
+**`src/data/mockActivities.ts`**:
+- Remover arquivo (nao sera mais usado)
+
+**`src/hooks/useStages.ts`**:
+- Adicionar funcao `calculateProgress` que retorna media dos stages.progress
+
+**`src/stores/useAppStore.ts`**:
+- Ja tem Activity interface, manter
 
 ---
 
 ### Detalhes Tecnicos
 
-- **Upload de avatar**: Path `avatars/{user_id}.jpg`. Sobrescreve o anterior (upsert: true). Gera URL publica e salva em `profiles.avatar_url`.
-- **Planos**: Apenas visual por enquanto. Nao ha integracao com pagamento. O `PlanType` no store continua como `'free'` ate implementar billing.
-- **Arquivar projeto**: Altera status para `'cancelled'` via supabase update. Nao deleta.
-- **Drawer de criacao de projeto**: Pode-se extrair o form do ProjectsPage em um componente reutilizavel, ou simplesmente navegar para `/projects` com query param para abrir o drawer.
-- **Responsividade**: Layout em coluna unica, funciona bem em mobile e desktop.
-
-### Arquivos a criar
-- Migracao SQL (bucket `avatars` + RLS de storage)
-- `src/components/profile/AvatarUpload.tsx`
-- `src/components/profile/PlanCard.tsx`
-- `src/components/profile/ProjectListSection.tsx`
-- `src/components/profile/AboutSection.tsx`
-
-### Arquivos a modificar
-- `src/pages/ProfilePage.tsx` (reescrever completamente)
-- `src/stores/useAppStore.ts` (adicionar PlanType 'flipper')
-- `public/locales/pt-BR.json` (novas chaves profile)
-- `public/locales/en-US.json` (novas chaves profile)
+- **Trigger auto-membership**: `AFTER INSERT ON projects` cria automaticamente `project_members` com `profile_id = (SELECT id FROM profiles WHERE user_id = NEW.owner_id)` e `role = 'owner'`
+- **Funcao is_project_member**: `SECURITY DEFINER` para evitar recursao RLS. Verifica se existe row em `project_members` com o `profile_id` correspondente ao `auth.uid()`
+- **Progresso real**: `SELECT AVG(progress) FROM stages WHERE project_id = ?` - retorna 0 se nao houver stages
+- **Feed de atividades**: Usa tabela `activities` ja existente. Os hooks existentes podem ser atualizados para inserir atividades ao criar RDOs, checklists, etc. (escopo futuro)
+- **Perfil para membership**: Como `profiles.id` (uuid auto) != `auth.uid()`, o join precisa passar por `profiles.user_id = auth.uid()` para encontrar o profile_id correto
 
