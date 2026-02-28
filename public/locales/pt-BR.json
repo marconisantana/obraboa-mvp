@@ -404,5 +404,32 @@
     "step3Subtitle": "Crie sua conta gratuita e comece a organizar suas obras",
     "createAccount": "Criar conta",
     "alreadyHaveAccount": "Já tenho conta"
+  },
+  "members": {
+    "invite": "Convidar membro",
+    "inviteTitle": "Convidar para o projeto",
+    "selectRole": "Selecione o papel",
+    "owner": "Proprietário",
+    "professional": "Profissional",
+    "client": "Cliente",
+    "viewer": "Visualizador",
+    "ownerDesc": "Acesso total ao projeto",
+    "professionalDesc": "Acesso total exceto deletar projeto",
+    "clientDesc": "Visualiza cronograma, referências, checklists",
+    "viewerDesc": "Apenas visualização",
+    "generateLink": "Gerar link de convite",
+    "copyLink": "Copiar link",
+    "linkCopied": "Link copiado!",
+    "linkExpires": "Link válido por 7 dias",
+    "shareWhatsapp": "Compartilhar via WhatsApp",
+    "shareEmail": "Compartilhar por e-mail",
+    "removeMember": "Remover membro",
+    "removeConfirm": "Tem certeza que deseja remover este membro?",
+    "changeRole": "Alterar papel",
+    "acceptingInvite": "Aceitando convite...",
+    "inviteAccepted": "Convite aceito! Você agora é membro do projeto.",
+    "inviteExpired": "Este convite expirou ou já foi utilizado.",
+    "inviteNotFound": "Convite não encontrado.",
+    "loginToAccept": "Faça login ou crie uma conta para aceitar o convite."
   }
 }

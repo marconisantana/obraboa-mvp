@@ -39,11 +39,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
     };
 
+    const acceptPendingInvite = async () => {
+      const pendingToken = localStorage.getItem('pending_invite_token');
+      if (!pendingToken) return;
+      try {
+        await supabase.functions.invoke('accept-invite', {
+          body: { token: pendingToken },
+        });
+      } catch { /* ignore */ }
+      localStorage.removeItem('pending_invite_token');
+    };
+
     // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
         fetchProfile(session.user.id);
+        acceptPendingInvite();
       } else {
         setUser(null);
       }
