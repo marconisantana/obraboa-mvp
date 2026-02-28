@@ -287,7 +287,8 @@
       "checklists": "Checklists",
       "purchases": "Purchases",
       "dossiers": "Dossiers",
-      "documents": "Documents"
+      "documents": "Documents",
+      "references": "References"
     }
   },
   "projectSelector": {
@@ -328,6 +329,29 @@
     "texture": "Texture",
     "enamel": "Enamel",
     "safetyMargin": "includes 10% safety margin"
+  },
+  "references": {
+    "title": "References",
+    "new": "New reference",
+    "addFromUrl": "Add from URL",
+    "uploadImage": "Upload image",
+    "imageUrl": "Image URL",
+    "observation": "Observation",
+    "category": "Category",
+    "all": "All",
+    "livingRoom": "Living Room",
+    "kitchen": "Kitchen",
+    "bathroom": "Bathroom",
+    "bedroom": "Bedroom",
+    "facade": "Facade",
+    "other": "Other",
+    "noReferences": "No references saved",
+    "noReferencesDesc": "Save inspiration images for your project",
+    "deleteConfirm": "Are you sure you want to delete this reference?",
+    "share": "Share",
+    "selectProject": "Select a project to view references",
+    "preview": "Preview",
+    "invalidUrl": "Invalid URL"
   },
   "onboarding": {
     "skip": "Skip",
