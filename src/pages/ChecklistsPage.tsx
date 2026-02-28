@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { useAppStore } from '@/stores/useAppStore';
 import { useProjectRole } from '@/hooks/useProjectRole';
 import { useChecklists } from '@/hooks/useChecklists';
@@ -10,10 +11,18 @@ import ChecklistForm from '@/components/checklist/ChecklistForm';
 
 export default function ChecklistsPage() {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeProject = useAppStore((s) => s.activeProject);
   const { canEdit } = useProjectRole();
   const { checklistsQuery, createChecklist } = useChecklists();
   const [formOpen, setFormOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && activeProject && canEdit) {
+      setFormOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, activeProject, canEdit]);
 
   if (!activeProject) {
     return (

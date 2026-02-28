@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Plus, ArrowUpDown } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
 import { useProjectRole } from '@/hooks/useProjectRole';
@@ -34,6 +35,7 @@ type SortMode = 'date' | 'status';
 export default function SchedulePage() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeProject = useAppStore((s) => s.activeProject);
   const { stages, isLoading, createStage, updateStage, deleteStage, getDependents, applyDateDeltaToDependents } = useStages(activeProject?.id);
   const { canEdit } = useProjectRole();
@@ -42,6 +44,14 @@ export default function SchedulePage() {
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>('date');
   const [deleteTarget, setDeleteTarget] = useState<Stage | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && activeProject && canEdit) {
+      setEditingStage(null);
+      setFormOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, activeProject, canEdit]);
 
   // Dependency dialog state
   const [depDialog, setDepDialog] = useState(false);

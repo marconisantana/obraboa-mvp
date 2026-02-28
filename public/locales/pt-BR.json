@@ -311,7 +311,8 @@
     "newRdo": "Novo RDO",
     "newStage": "Nova Etapa",
     "newChecklist": "Novo Checklist",
-    "newOc": "Nova OC"
+    "newOc": "Nova OC",
+    "selectProject": "Selecione a obra"
   },
   "projectView": {
     "title": "Visão do Projeto",

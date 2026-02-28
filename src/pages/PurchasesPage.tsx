@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { useAppStore } from '@/stores/useAppStore';
 import { useProjectRole } from '@/hooks/useProjectRole';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
@@ -10,11 +11,23 @@ import PurchaseOrderForm from '@/components/purchases/PurchaseOrderForm';
 
 export default function PurchasesPage() {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeProject = useAppStore((s) => s.activeProject);
   const { canEdit } = useProjectRole();
   const { ordersQuery, generateOrderNumber, createOrder } = usePurchaseOrders(activeProject?.id);
   const [formOpen, setFormOpen] = useState(false);
   const [nextNumber, setNextNumber] = useState('');
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && activeProject && canEdit) {
+      (async () => {
+        const num = await generateOrderNumber(activeProject.id);
+        setNextNumber(num);
+        setFormOpen(true);
+        setSearchParams({}, { replace: true });
+      })();
+    }
+  }, [searchParams, activeProject, canEdit]);
 
   if (!activeProject) {
     return (

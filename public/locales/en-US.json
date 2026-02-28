@@ -311,7 +311,8 @@
     "newRdo": "New RDO",
     "newStage": "New Stage",
     "newChecklist": "New Checklist",
-    "newOc": "New PO"
+    "newOc": "New PO",
+    "selectProject": "Select project"
   },
   "projectView": {
     "title": "Project Overview",
