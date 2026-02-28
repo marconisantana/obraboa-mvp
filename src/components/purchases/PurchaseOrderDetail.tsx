@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import PurchaseOrderForm from './PurchaseOrderForm';
-import PurchaseOrderPrintView from './PurchaseOrderPrintView';
+import { generatePurchaseOrderPdf } from '@/lib/generatePurchaseOrderPdf';
 import { format, parseISO } from 'date-fns';
 
 const statusColors: Record<string, string> = {
@@ -25,6 +25,9 @@ const statusColors: Record<string, string> = {
   approved: 'bg-green-100 text-green-700',
   received: 'bg-orange-100 text-orange-700',
 };
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
 export default function PurchaseOrderDetailPage() {
   const { t } = useTranslation();
@@ -39,23 +42,38 @@ export default function PurchaseOrderDetailPage() {
   if (isLoading) return <p className="text-center py-10 text-muted-foreground">{t('common.loading')}</p>;
   if (!order) return <p className="text-center py-10 text-muted-foreground">{t('common.noResults')}</p>;
 
-  const handlePrint = () => window.print();
+  const hasPrice = order.items.some((item) => item.unit_price > 0);
+  const grandTotal = order.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+
+  const handleExportPdf = () => {
+    const doc = generatePurchaseOrderPdf(order, activeProject?.name || '');
+    doc.save(`${order.order_number}.pdf`);
+  };
 
   const buildSummary = () => {
     const lines = [`📋 ${order.order_number} - ${order.supplier_name}\n`];
     if (order.items.length > 0) {
       lines.push(`📦 Itens:`);
-      order.items.forEach((item, i) => lines.push(`  ${i + 1}. ${item.description} - ${item.quantity} ${item.unit}`));
+      order.items.forEach((item, i) => {
+        let line = `  ${i + 1}. ${item.description} - ${item.quantity} ${item.unit}`;
+        if (item.unit_price > 0) line += ` × ${formatCurrency(item.unit_price)}`;
+        lines.push(line);
+      });
+    }
+    if (hasPrice && grandTotal > 0) {
+      lines.push(`\n💰 ${t('purchases.grandTotal')}: ${formatCurrency(grandTotal)}`);
     }
     if (order.observations) lines.push(`\n📌 Obs: ${order.observations}`);
     return lines.join('\n');
   };
 
-  const handleShare = (method: 'whatsapp' | 'email') => {
+  const handleShare = (method: 'whatsapp' | 'telegram' | 'email') => {
     const text = buildSummary();
     const encoded = encodeURIComponent(text);
     if (method === 'whatsapp') {
       window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    } else if (method === 'telegram') {
+      window.open(`https://t.me/share/url?url=&text=${encoded}`, '_blank');
     } else {
       window.open(`mailto:?subject=${encodeURIComponent(order.order_number)}&body=${encoded}`, '_blank');
     }
@@ -75,7 +93,7 @@ export default function PurchaseOrderDetailPage() {
 
   return (
     <>
-      <div className="space-y-4 print:hidden">
+      <div className="space-y-4">
         <button onClick={() => navigate('/purchases')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft size={16} /> {t('common.back')}
         </button>
@@ -93,26 +111,37 @@ export default function PurchaseOrderDetailPage() {
             </div>
 
             {order.items.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>{t('purchases.itemDescription')}</TableHead>
-                    <TableHead className="text-right">{t('purchases.quantity')}</TableHead>
-                    <TableHead>{t('purchases.unit')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {order.items.map((item, i) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell>{item.description}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>#</TableHead>
+                      <TableHead>{t('purchases.itemDescription')}</TableHead>
+                      <TableHead className="text-right">{t('purchases.quantity')}</TableHead>
+                      <TableHead>{t('purchases.unit')}</TableHead>
+                      {hasPrice && <TableHead className="text-right">{t('purchases.unitPrice')}</TableHead>}
+                      {hasPrice && <TableHead className="text-right">{t('purchases.totalValue')}</TableHead>}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {order.items.map((item, i) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{i + 1}</TableCell>
+                        <TableCell>{item.description}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell>{item.unit}</TableCell>
+                        {hasPrice && <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>}
+                        {hasPrice && <TableCell className="text-right">{formatCurrency(item.quantity * item.unit_price)}</TableCell>}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {hasPrice && grandTotal > 0 && (
+                  <div className="flex justify-end text-sm font-bold">
+                    {t('purchases.grandTotal')}: {formatCurrency(grandTotal)}
+                  </div>
+                )}
+              </>
             )}
 
             {order.observations && (
@@ -136,8 +165,9 @@ export default function PurchaseOrderDetailPage() {
                   <Button variant="outline" size="sm"><Share2 size={14} className="mr-1" /> {t('rdo.export')}</Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handlePrint}><FileDown size={14} className="mr-2" /> {t('purchases.exportPdf')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPdf}><FileDown size={14} className="mr-2" /> {t('purchases.exportPdf')}</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleShare('whatsapp')}>{t('purchases.shareWhatsapp')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('telegram')}>{t('purchases.shareTelegram')}</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleShare('email')}>{t('purchases.shareEmail')}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -146,8 +176,6 @@ export default function PurchaseOrderDetailPage() {
           </CardContent>
         </Card>
       </div>
-
-      <PurchaseOrderPrintView order={order} projectName={activeProject?.name || ''} />
 
       <PurchaseOrderForm
         open={editOpen}
@@ -158,7 +186,7 @@ export default function PurchaseOrderDetailPage() {
           supplier_name: order.supplier_name,
           supplier_contact: order.supplier_contact || '',
           observations: order.observations || '',
-          items: order.items.map((i) => ({ description: i.description, quantity: i.quantity, unit: i.unit })),
+          items: order.items.map((i) => ({ description: i.description, quantity: i.quantity, unit: i.unit, unit_price: i.unit_price })),
         }}
         isLoading={updateOrder.isPending}
       />

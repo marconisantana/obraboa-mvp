@@ -11,6 +11,7 @@ interface ItemRow {
   description: string;
   quantity: number;
   unit: string;
+  unit_price: number;
 }
 
 interface PurchaseOrderFormProps {
@@ -37,23 +38,23 @@ export default function PurchaseOrderForm({ open, onOpenChange, orderNumber, onS
   const [supplierName, setSupplierName] = useState('');
   const [supplierContact, setSupplierContact] = useState('');
   const [observations, setObservations] = useState('');
-  const [items, setItems] = useState<ItemRow[]>([{ description: '', quantity: 1, unit: 'un' }]);
+  const [items, setItems] = useState<ItemRow[]>([{ description: '', quantity: 1, unit: 'un', unit_price: 0 }]);
 
   useEffect(() => {
     if (open && initialData) {
       setSupplierName(initialData.supplier_name);
       setSupplierContact(initialData.supplier_contact);
       setObservations(initialData.observations);
-      setItems(initialData.items.length > 0 ? initialData.items : [{ description: '', quantity: 1, unit: 'un' }]);
+      setItems(initialData.items.length > 0 ? initialData.items : [{ description: '', quantity: 1, unit: 'un', unit_price: 0 }]);
     } else if (open) {
       setSupplierName('');
       setSupplierContact('');
       setObservations('');
-      setItems([{ description: '', quantity: 1, unit: 'un' }]);
+      setItems([{ description: '', quantity: 1, unit: 'un', unit_price: 0 }]);
     }
   }, [open, initialData]);
 
-  const addItem = () => setItems([...items, { description: '', quantity: 1, unit: 'un' }]);
+  const addItem = () => setItems([...items, { description: '', quantity: 1, unit: 'un', unit_price: 0 }]);
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: keyof ItemRow, value: string | number) => {
     const updated = [...items];
@@ -92,12 +93,12 @@ export default function PurchaseOrderForm({ open, onOpenChange, orderNumber, onS
             <Label>{t('purchases.items')}</Label>
             <div className="space-y-2 mt-2">
               {items.map((item, i) => (
-                <div key={i} className="flex gap-2 items-start">
+                <div key={i} className="flex gap-2 items-start flex-wrap">
                   <Input
                     placeholder={t('purchases.itemDescription')}
                     value={item.description}
                     onChange={(e) => updateItem(i, 'description', e.target.value)}
-                    className="flex-1"
+                    className="flex-1 min-w-[120px]"
                   />
                   <Input
                     type="number"
@@ -111,6 +112,15 @@ export default function PurchaseOrderForm({ open, onOpenChange, orderNumber, onS
                     value={item.unit}
                     onChange={(e) => updateItem(i, 'unit', e.target.value)}
                     className="w-16"
+                  />
+                  <Input
+                    type="number"
+                    placeholder={t('purchases.unitPrice')}
+                    value={item.unit_price || ''}
+                    onChange={(e) => updateItem(i, 'unit_price', Number(e.target.value))}
+                    className="w-24"
+                    min={0}
+                    step={0.01}
                   />
                   {items.length > 1 && (
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(i)}>
