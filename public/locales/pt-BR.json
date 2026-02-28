@@ -126,7 +126,11 @@
     "noActivity": "Nenhuma atividade recente",
     "emptyTitle": "Nenhuma atividade ainda",
     "emptyCta": "Comece adicionando a primeira etapa do cronograma",
-    "pullToRefresh": "Solte para atualizar"
+    "pullToRefresh": "Solte para atualizar",
+    "myProjects": "Minhas Obras",
+    "stages": "etapas",
+    "noStages": "Sem etapas",
+    "viewProject": "Ver obra"
   },
   "schedule": {
     "title": "Cronograma",

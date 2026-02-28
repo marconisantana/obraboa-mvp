@@ -126,7 +126,11 @@
     "noActivity": "No recent activity",
     "emptyTitle": "No activity yet",
     "emptyCta": "Start by adding the first stage to the schedule",
-    "pullToRefresh": "Release to refresh"
+    "pullToRefresh": "Release to refresh",
+    "myProjects": "My Projects",
+    "stages": "stages",
+    "noStages": "No stages",
+    "viewProject": "View project"
   },
   "schedule": {
     "title": "Schedule",
