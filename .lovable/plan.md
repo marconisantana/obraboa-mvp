@@ -1,196 +1,174 @@
 
-
-## Modulo RDO (Relatorio Diario de Obra)
+## Modulo Checklists
 
 ### Resumo
 
-Criar o modulo completo de RDO com banco de dados (tabelas + storage bucket), listagem, criacao/edicao com upload de fotos, detalhe, resumo semanal e exportacao PDF com compartilhamento via WhatsApp, Telegram e email.
+Criar o modulo completo de Checklists inspirado no Checklist Facil, com banco de dados (3 tabelas + storage), listagem com progresso, templates pre-definidos, tela de checklist com itens interativos (checkbox otimista, reordenacao, upload de foto de comprovacao), e barra de progresso no topo.
 
 ---
 
 ### 1. Banco de dados
 
-**Tabela `rdos`:**
+**Tabela `checklists`:**
 
 | Coluna | Tipo | Default | Nullable |
 |---|---|---|---|
 | id | uuid | gen_random_uuid() | No |
 | project_id | uuid | FK -> projects.id CASCADE | No |
 | user_id | uuid | auth.uid() | No |
-| date | date | - | No |
-| activities | text | '' | Yes |
-| observations | text | '' | Yes |
+| name | text | - | No |
+| status | text | 'in_progress' | No |
+| responsible_name | text | '' | Yes |
+| due_date | date | null | Yes |
 | created_at | timestamptz | now() | No |
 | updated_at | timestamptz | now() | No |
 
-Constraint UNIQUE em `(project_id, date)` para impedir duplicatas.
-
-**Tabela `rdo_team_members`:**
+**Tabela `checklist_items`:**
 
 | Coluna | Tipo | Default | Nullable |
 |---|---|---|---|
 | id | uuid | gen_random_uuid() | No |
-| rdo_id | uuid | FK -> rdos.id CASCADE | No |
-| name | text | - | No |
-| role | text | '' | Yes |
-| hours_worked | numeric(4,1) | 0 | No |
-
-**Tabela `rdo_photos`:**
-
-| Coluna | Tipo | Default | Nullable |
-|---|---|---|---|
-| id | uuid | gen_random_uuid() | No |
-| rdo_id | uuid | FK -> rdos.id CASCADE | No |
-| storage_path | text | - | No |
-| caption | text | '' | Yes |
-| annotations_json | jsonb | null | Yes |
+| checklist_id | uuid | FK -> checklists.id CASCADE | No |
+| text | text | - | No |
+| checked | boolean | false | No |
+| responsible_name | text | '' | Yes |
+| due_date | date | null | Yes |
 | sort_order | integer | 0 | No |
+| created_at | timestamptz | now() | No |
 
-**Storage bucket**: `rdo-photos` (public) com RLS para que apenas o owner do projeto possa fazer upload/delete.
+**Tabela `checklist_item_photos`:**
 
-**RLS**: Todas as tabelas com policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = rdos.project_id AND projects.owner_id = auth.uid())`.
+| Coluna | Tipo | Default | Nullable |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | No |
+| item_id | uuid | FK -> checklist_items.id CASCADE | No |
+| storage_path | text | - | No |
+| created_at | timestamptz | now() | No |
+
+**Storage bucket**: `checklist-photos` (public).
+
+**RLS**: Todas as tabelas com policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = checklists.project_id AND projects.owner_id = auth.uid())` (com joins para item_photos via checklist_items -> checklists).
+
+**Trigger** `update_updated_at_column` na tabela `checklists`.
 
 ### 2. Traducoes (i18n)
 
-Novas chaves em ambos os locales:
+Novas chaves em `pt-BR.json` e `en-US.json`:
 
-```
-"rdo": {
-  "title": "Diario de Obra",
-  "newRdo": "Novo RDO",
-  "editRdo": "Editar RDO",
-  "date": "Data",
-  "activities": "Atividades realizadas",
-  "observations": "Observacoes gerais",
-  "team": "Equipe presente",
-  "addMember": "Adicionar membro",
-  "memberName": "Nome",
-  "memberRole": "Funcao",
-  "hoursWorked": "Horas",
-  "photos": "Fotos",
-  "addPhotos": "Adicionar fotos",
-  "caption": "Legenda",
-  "noRdos": "Nenhum RDO cadastrado",
-  "noRdosDesc": "Registre o primeiro relatorio diario",
-  "duplicateDate": "Ja existe um RDO nesta data. Deseja edita-lo?",
-  "editExisting": "Editar existente",
-  "weeklySummary": "Resumo da semana",
-  "export": "Exportar PDF",
-  "shareWhatsapp": "Enviar por WhatsApp",
-  "shareTelegram": "Enviar por Telegram",
-  "shareEmail": "Enviar por e-mail",
-  "annotate": "Anotar foto",
-  "deletePhoto": "Excluir foto",
-  "noFutureDate": "Nao e permitido data futura"
+```text
+"checklist": {
+  "title": "Checklists",
+  "new": "Novo Checklist",
+  "edit": "Editar Checklist",
+  "name": "Nome do checklist",
+  "responsible": "Responsavel",
+  "dueDate": "Prazo",
+  "noChecklists": "Nenhum checklist cadastrado",
+  "noChecklistsDesc": "Crie o primeiro checklist do projeto",
+  "templates": "Criar a partir de template",
+  "templateInspection": "Vistoria de recebimento",
+  "templateCleaning": "Limpeza pos obra",
+  "templateHandover": "Entrega de chaves",
+  "templateBlank": "Em branco",
+  "addItem": "Adicionar item",
+  "itemPlaceholder": "Descreva o item...",
+  "progressLabel": "{checked} de {total} itens concluidos ({percent}%)",
+  "in_progress": "Em andamento",
+  "completed": "Concluido",
+  "delayed": "Atrasado",
+  "uploadProof": "Foto de comprovacao",
+  "deleteConfirm": "Tem certeza que deseja excluir este checklist?",
+  "markComplete": "Marcar como concluido"
 }
 ```
 
-### 3. Hook `useRdos`
+### 3. Templates pre-definidos
 
-Criar `src/hooks/useRdos.ts`:
-- React Query + Supabase CRUD para `rdos`, `rdo_team_members`, `rdo_photos`
-- `fetchRdos(projectId)`: lista ordenada por data desc, com contagem de fotos
-- `fetchRdoDetail(rdoId)`: RDO completo com team_members e photos
-- `createRdo`, `updateRdo`, `deleteRdo`
-- `checkDuplicateDate(projectId, date)`: retorna RDO existente ou null
-- `fetchWeeklySummary(projectId)`: agrega RDOs dos ultimos 7 dias
+Definidos como constante no frontend (sem banco). Cada template e um array de strings que sera usado para criar os itens iniciais:
 
-### 4. Componentes
+- **Vistoria de recebimento**: "Verificar paredes e revestimentos", "Verificar piso", "Verificar esquadrias", "Verificar instalacoes eletricas", "Verificar instalacoes hidraulicas", "Verificar pintura", "Verificar louças e metais", "Verificar portas e fechaduras"
+- **Limpeza pos obra**: "Remover entulhos", "Limpeza grossa de pisos", "Limpeza de vidros", "Limpeza de bancadas", "Limpeza de louças sanitarias", "Aspirar todos os ambientes", "Limpeza final de pisos"
+- **Entrega de chaves**: "Testar todas as chaves", "Verificar funcionamento de fechaduras", "Testar interfone", "Verificar medidores (agua, luz, gas)", "Assinar termo de entrega", "Entregar manual do proprietario"
+- **Em branco**: []
 
-**`src/components/rdo/RdoCard.tsx`** - Card para a listagem:
-- Data formatada, thumbnail da primeira foto (ou placeholder), resumo truncado das atividades
-- Badge com contagem de fotos e membros da equipe
+### 4. Hook `useChecklists`
+
+Criar `src/hooks/useChecklists.ts`:
+- React Query + Supabase CRUD para `checklists` e `checklist_items`
+- `fetchChecklists(projectId)`: lista com contagem de itens total/checked
+- `fetchChecklistDetail(checklistId)`: checklist com todos os itens e fotos
+- `createChecklist`, `updateChecklist`, `deleteChecklist`
+- `toggleItem(itemId, checked)`: atualiza otimisticamente no cache do React Query antes de salvar
+- `addItem`, `updateItem`, `deleteItem`, `reorderItems`
+- `uploadItemPhoto`, `deleteItemPhoto`
+
+### 5. Componentes
+
+**`src/components/checklist/ChecklistCard.tsx`** - Card para a listagem:
+- Nome do checklist, badge de status colorido (azul/verde/vermelho)
+- Barra de progresso com "X/Y itens"
+- Data e responsavel
 - Click navega para detalhe
 
-**`src/components/rdo/RdoForm.tsx`** - Formulario Dialog/Drawer:
-- DatePicker (padrao = hoje, max = hoje, sem datas futuras)
-- Textarea para atividades
-- Lista dinamica de membros: campos nome, funcao, horas - botao "+ Adicionar membro"
-- Grid de upload de fotos: accept image/*, multiplo, preview em miniatura, caption por foto
-- Textarea para observacoes
-- Ao selecionar data, verifica duplicata e sugere editar existente
+**`src/components/checklist/ChecklistForm.tsx`** - Dialog para criar/editar:
+- Nome, responsavel, prazo
+- Selecao de template (grid de 4 opcoes) - apenas na criacao
 - Validacao com zod
 
-**`src/components/rdo/PhotoAnnotator.tsx`** - Anotador de fotos:
-- Canvas overlay sobre a imagem
-- Ferramentas: pincel (cores/tamanhos), texto, borracha, desfazer
-- Salva anotacoes como JSON (coordenadas + strokes) no campo `annotations_json`
-- Renderiza anotacoes sobre a foto na visualizacao
+**`src/components/checklist/ChecklistDetail.tsx`** - Tela do checklist:
+- Barra de progresso no topo: "12 de 20 itens concluidos (60%)"
+- Lista de itens com checkbox, texto, responsavel, prazo
+- Input inline no final para adicionar item rapidamente (Enter para confirmar)
+- Drag-and-drop para reordenar (usando touch events simples, similar ao swipe do StageCard)
+- Ao marcar item como concluido, habilita botao de upload de foto de comprovacao
+- Menu de acoes: editar checklist, excluir
 
-**`src/components/rdo/RdoDetail.tsx`** - Tela de detalhe:
-- Todas as informacoes do RDO
-- Galeria de fotos expandivel (click para fullscreen com anotacoes)
-- Tabela de equipe presente
-- Botoes de acao: editar, exportar PDF, compartilhar
+**`src/components/checklist/ChecklistItemRow.tsx`** - Linha de item individual:
+- Checkbox com atualizacao otimista
+- Texto do item (editavel inline ao clicar)
+- Icones opcionais de responsavel e prazo
+- Botao de foto (aparece apos marcar concluido)
+- Handle de drag (icone de arrastar)
 
-**`src/components/rdo/WeeklySummary.tsx`** - Resumo semanal:
-- Agrega atividades dos ultimos 7 dias
-- Total de horas da equipe
-- Grid de todas as fotos do periodo
-- Botao de exportar PDF do resumo
+### 6. Pagina ChecklistsPage
 
-**`src/components/rdo/RdoExportMenu.tsx`** - Menu de exportacao:
-- Gera PDF client-side usando a API de print do browser (window.print com CSS @media print) ou uma div oculta renderizada como PDF
-- Opcoes de compartilhamento:
-  - WhatsApp: `https://wa.me/?text=...` com link do PDF ou texto resumido
-  - Telegram: `https://t.me/share/url?url=...&text=...`
-  - Email: `mailto:?subject=...&body=...`
-- Nota: como nao ha servidor para hospedar PDFs, o fluxo sera gerar o PDF no browser, o usuario salva/compartilha manualmente, ou usa Web Share API quando disponivel
-
-### 5. Pagina RdoPage
-
-Criar `src/pages/RdoPage.tsx`:
+Criar `src/pages/ChecklistsPage.tsx`:
 - Sem projeto ativo: mensagem pedindo selecionar projeto
-- Lista de RDOs ordenada por data (mais recente primeiro)
-- Botao "+ Novo RDO" no topo
-- Botao "Resumo da semana" no topo
-- Click no card abre detalhe
+- Lista de checklists ordenada por updated_at desc
+- Botao "+ Novo Checklist" no topo
+- Status automatico "Atrasado": checklists com `due_date < today` e `status != 'completed'`
 
-### 6. Roteamento
+### 7. Roteamento e Navegacao
 
 Adicionar em `App.tsx`:
-- `/rdo` - RdoPage (listagem)
-- `/rdo/:id` - RdoDetail (detalhe)
+- `/checklists` - ChecklistsPage (listagem)
+- `/checklists/:id` - ChecklistDetail (detalhe)
 
-Atualizar `ProjectDetailPage` para que o atalho "RDO" navegue para `/rdo`.
+Atualizar `ProjectDetailPage`: atalho "Checklists" navega para `/checklists`.
 
-### 7. Exportacao PDF
-
-Abordagem client-side usando `window.print()` com CSS `@media print`:
-- Componente `RdoPrintView` renderiza o RDO em formato imprimivel
-- O usuario usa "Salvar como PDF" do dialogo de impressao do browser
-- Web Share API (`navigator.share()`) para compartilhar diretamente quando disponivel no mobile
-- Fallback para links diretos WhatsApp/Telegram/email com texto resumido do RDO
+Adicionar link na `ToolsPage` ou manter acesso via projeto.
 
 ---
 
 ### Detalhes Tecnicos
 
-- **Upload de fotos**: Usa Supabase Storage com bucket `rdo-photos`. Path: `{project_id}/{rdo_id}/{uuid}.jpg`. Upload via `supabase.storage.from('rdo-photos').upload()`.
-- **Anotacoes**: Canvas HTML5 com `getContext('2d')`. Strokes salvos como array de pontos `{x, y, color, width}` em JSON. Para texto, posicao `{x, y, text, fontSize, color}`. Renderizado sobre a imagem no detalhe.
-- **Duplicata de data**: Query `select id from rdos where project_id = ? and date = ?` antes de abrir form de criacao.
-- **Resumo semanal**: Query com filtro `date >= today - 7 days`, agrega no frontend.
-- **PDF via print**: Componente hidden com `@media print` que mostra apenas o conteudo do RDO formatado. Alternativa: usar `html2canvas` + `jspdf` se precisar de PDF real para compartilhar (requer instalar dependencias extras).
+- **Otimismo no checkbox**: Usa `queryClient.setQueryData` para atualizar o cache imediatamente, faz o `supabase.update` em background, reverte em caso de erro (`onError` da mutation).
+- **Drag-and-drop**: Implementacao leve usando `onDragStart/onDragOver/onDrop` nativo do HTML5 (atributo `draggable`). No mobile, handle de toque para reordenar. Ao soltar, atualiza `sort_order` de todos os itens afetados no banco.
+- **Foto de comprovacao**: Upload para bucket `checklist-photos` com path `{checklist_id}/{item_id}/{uuid}.jpg`. Botao de upload so aparece quando `checked = true`.
+- **Status automatico**: Calculado no frontend - se `due_date` existe e `due_date < today` e nem todos os itens estao checked, status = "delayed".
+- **Input inline**: Input no final da lista com placeholder "Descreva o item...". Ao pressionar Enter, cria o item e limpa o input. Focus permanece no input para adicao rapida.
 
 ### Arquivos a criar
-- `src/hooks/useRdos.ts`
-- `src/pages/RdoPage.tsx`
-- `src/components/rdo/RdoCard.tsx`
-- `src/components/rdo/RdoForm.tsx`
-- `src/components/rdo/RdoDetail.tsx`
-- `src/components/rdo/PhotoAnnotator.tsx`
-- `src/components/rdo/WeeklySummary.tsx`
-- `src/components/rdo/RdoExportMenu.tsx`
-- `src/components/rdo/RdoPrintView.tsx`
+- Migracao SQL (tabelas + bucket + RLS)
+- `src/hooks/useChecklists.ts`
+- `src/pages/ChecklistsPage.tsx`
+- `src/components/checklist/ChecklistCard.tsx`
+- `src/components/checklist/ChecklistForm.tsx`
+- `src/components/checklist/ChecklistDetail.tsx`
+- `src/components/checklist/ChecklistItemRow.tsx`
 
 ### Arquivos a modificar
 - `src/App.tsx` (novas rotas)
-- `src/pages/ProjectDetailPage.tsx` (atalho RDO navega para /rdo)
-- `public/locales/pt-BR.json` (novas chaves rdo)
-- `public/locales/en-US.json` (novas chaves rdo)
-
-### Migracoes de banco
-- Criar tabelas `rdos`, `rdo_team_members`, `rdo_photos` com RLS
-- Criar bucket `rdo-photos` com policies de storage
-- Trigger `update_updated_at_column` na tabela `rdos`
-
+- `src/pages/ProjectDetailPage.tsx` (atalho checklists navega para /checklists)
+- `public/locales/pt-BR.json` (novas chaves checklist)
+- `public/locales/en-US.json` (novas chaves checklist)
