@@ -17,6 +17,8 @@ import ProjectsPage from "@/pages/ProjectsPage";
 import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import SchedulePage from "@/pages/SchedulePage";
 import DocumentsPage from "@/pages/DocumentsPage";
+import ToolsPage from "@/pages/ToolsPage";
+import PendingPage from "@/pages/PendingPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotFound from "@/pages/NotFound";
 import "@/i18n";
@@ -47,6 +49,8 @@ const App = () => (
                 <Route path="/projects/:id" element={<ProjectDetailPage />} />
                 <Route path="/schedule" element={<SchedulePage />} />
                 <Route path="/documents" element={<DocumentsPage />} />
+                <Route path="/tools" element={<ToolsPage />} />
+                <Route path="/pending" element={<PendingPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
             </Route>

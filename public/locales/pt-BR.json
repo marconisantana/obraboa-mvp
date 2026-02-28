@@ -5,9 +5,11 @@
   },
   "nav": {
     "home": "Início",
-    "projects": "Projetos",
+    "projects": "Obras",
     "schedule": "Cronograma",
     "documents": "Documentos",
+    "tools": "Ferramentas",
+    "pending": "Pendências",
     "profile": "Perfil"
   },
   "auth": {

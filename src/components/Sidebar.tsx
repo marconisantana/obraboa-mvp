@@ -1,14 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FolderKanban, CalendarDays, FileText, UserCircle, LogOut } from 'lucide-react';
+import { Home, HardHat, Wrench, CircleAlert, User, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const navItems = [
   { key: 'home', path: '/', icon: Home },
-  { key: 'projects', path: '/projects', icon: FolderKanban },
-  { key: 'schedule', path: '/schedule', icon: CalendarDays },
-  { key: 'documents', path: '/documents', icon: FileText },
-  { key: 'profile', path: '/profile', icon: UserCircle },
+  { key: 'projects', path: '/projects', icon: HardHat },
+  { key: 'tools', path: '/tools', icon: Wrench },
+  { key: 'pending', path: '/pending', icon: CircleAlert },
+  { key: 'profile', path: '/profile', icon: User },
 ];
 
 export default function Sidebar() {
@@ -17,7 +17,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
 
   return (
-    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-card lg:fixed lg:inset-y-0 lg:left-0 lg:z-40">
+    <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:bg-card md:fixed md:inset-y-0 md:left-0 md:z-40">
       <div className="flex h-16 items-center gap-3 border-b px-6">
         <img src="/logo-obraboa-navy.svg" alt="ObraBoa" className="h-10" />
       </div>
