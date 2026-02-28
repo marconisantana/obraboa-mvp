@@ -263,7 +263,12 @@
     "noPurchasesDesc": "Crie a primeira ordem de compra",
     "exportPdf": "Exportar PDF",
     "shareWhatsapp": "Enviar por WhatsApp",
+    "shareTelegram": "Enviar por Telegram",
     "shareEmail": "Enviar por e-mail",
+    "unitPrice": "Preço Unit.",
+    "totalValue": "Total",
+    "grandTotal": "Total Geral",
+    "generatedBy": "Gerado por ObraBoa",
     "deleteConfirm": "Tem certeza que deseja excluir esta OC?",
     "markSent": "Marcar como enviada",
     "selectProject": "Selecione um projeto para ver as OCs"

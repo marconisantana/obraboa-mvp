@@ -21,6 +21,7 @@ export interface PurchaseOrderItem {
   description: string;
   quantity: number;
   unit: string;
+  unit_price: number;
   sort_order: number;
 }
 
@@ -96,7 +97,7 @@ export function usePurchaseOrders(projectId: string | undefined) {
       supplier_name: string;
       supplier_contact?: string;
       observations?: string;
-      items: { description: string; quantity: number; unit: string }[];
+      items: { description: string; quantity: number; unit: string; unit_price?: number }[];
     }) => {
       const { items, ...orderData } = data;
       const { data: order, error } = await supabase
@@ -112,6 +113,7 @@ export function usePurchaseOrders(projectId: string | undefined) {
           description: item.description,
           quantity: item.quantity,
           unit: item.unit,
+          unit_price: item.unit_price || 0,
           sort_order: i,
         }));
         const { error: itemError } = await supabase.from('purchase_order_items').insert(itemRows);
@@ -131,7 +133,7 @@ export function usePurchaseOrders(projectId: string | undefined) {
       supplier_contact?: string;
       observations?: string;
       status?: string;
-      items?: { id?: string; description: string; quantity: number; unit: string }[];
+      items?: { id?: string; description: string; quantity: number; unit: string; unit_price?: number }[];
     }) => {
       const { id, items, ...updates } = data;
       const { error } = await supabase.from('purchase_orders').update(updates).eq('id', id);
@@ -145,6 +147,7 @@ export function usePurchaseOrders(projectId: string | undefined) {
             description: item.description,
             quantity: item.quantity,
             unit: item.unit,
+            unit_price: item.unit_price || 0,
             sort_order: i,
           }));
           const { error: ie } = await supabase.from('purchase_order_items').insert(itemRows);
