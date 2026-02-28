@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS auto_create_project_member_trigger ON public.projects;
