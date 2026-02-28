@@ -6,14 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   CalendarDays, FileText, CheckSquare, ShoppingCart,
-  FolderArchive, BookImage, Images, MapPin, UserPlus, ArrowLeft,
+  FolderArchive, BookImage, Images, MapPin, ArrowLeft,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useStages } from '@/hooks/useStages';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import MembersSection from '@/components/members/MembersSection';
 
 const statusColors: Record<ProjectStatus, string> = {
   planning: 'bg-blue-100 text-blue-700',
@@ -22,14 +20,6 @@ const statusColors: Record<ProjectStatus, string> = {
   completed: 'bg-success/20 text-success',
   cancelled: 'bg-destructive/20 text-destructive',
 };
-
-interface MemberInfo {
-  id: string;
-  role: string;
-  full_name: string;
-  avatar_url: string | null;
-  initials: string;
-}
 
 export default function ProjectDetailPage() {
   const { t } = useTranslation();
@@ -44,51 +34,6 @@ export default function ProjectDetailPage() {
     ? Math.round(stages.reduce((sum, s) => sum + s.progress, 0) / stages.length)
     : 0;
 
-  const [members, setMembers] = useState<MemberInfo[]>([]);
-
-  useEffect(() => {
-    if (!id) return;
-    (async () => {
-      const { data } = await supabase
-        .from('project_members' as any)
-        .select('id, role, profile_id')
-        .eq('project_id', id);
-
-      if (!data || data.length === 0) {
-        setMembers([]);
-        return;
-      }
-
-      const profileIds = (data as any[]).map((m: any) => m.profile_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', profileIds);
-
-      const profileMap = Object.fromEntries(
-        (profiles ?? []).map((p) => [p.id, p])
-      );
-
-      setMembers(
-        (data as any[]).map((m: any) => {
-          const prof = profileMap[m.profile_id] || { full_name: '', avatar_url: null };
-          const initials = prof.full_name
-            .split(' ')
-            .map((w: string) => w[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase();
-          return {
-            id: m.id,
-            role: m.role,
-            full_name: prof.full_name,
-            avatar_url: prof.avatar_url,
-            initials,
-          };
-        })
-      );
-    })();
-  }, [id]);
 
   if (!project) {
     return (
@@ -160,30 +105,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          <div>
-            <p className="text-sm text-muted-foreground mb-2">{t('projectView.members')}</p>
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-2">
-                {members.map((m) => (
-                  <Avatar key={m.id} className="h-9 w-9 border-2 border-card">
-                    <AvatarImage src={m.avatar_url ?? undefined} alt={m.full_name} />
-                    <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                      {m.initials}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => toast({ title: t('common.comingSoon') })}
-                className="ml-2"
-              >
-                <UserPlus size={14} />
-                {t('projectView.invite')}
-              </Button>
-            </div>
-          </div>
+          {id && <MembersSection projectId={id} />}
         </CardContent>
       </Card>
 

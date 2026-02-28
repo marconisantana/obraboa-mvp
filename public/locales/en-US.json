@@ -404,5 +404,32 @@
     "step3Subtitle": "Create your free account and start organizing your projects",
     "createAccount": "Create account",
     "alreadyHaveAccount": "Already have an account"
+  },
+  "members": {
+    "invite": "Invite member",
+    "inviteTitle": "Invite to project",
+    "selectRole": "Select role",
+    "owner": "Owner",
+    "professional": "Professional",
+    "client": "Client",
+    "viewer": "Viewer",
+    "ownerDesc": "Full access to the project",
+    "professionalDesc": "Full access except deleting the project",
+    "clientDesc": "Views schedule, references, checklists",
+    "viewerDesc": "View only",
+    "generateLink": "Generate invite link",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied!",
+    "linkExpires": "Link valid for 7 days",
+    "shareWhatsapp": "Share via WhatsApp",
+    "shareEmail": "Share via email",
+    "removeMember": "Remove member",
+    "removeConfirm": "Are you sure you want to remove this member?",
+    "changeRole": "Change role",
+    "acceptingInvite": "Accepting invite...",
+    "inviteAccepted": "Invite accepted! You are now a project member.",
+    "inviteExpired": "This invite has expired or has already been used.",
+    "inviteNotFound": "Invite not found.",
+    "loginToAccept": "Log in or create an account to accept this invite."
   }
 }

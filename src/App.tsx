@@ -29,6 +29,7 @@ import ToolsPage from "@/pages/ToolsPage";
 import ReferencesPage from "@/pages/ReferencesPage";
 import PendingPage from "@/pages/PendingPage";
 import ProfilePage from "@/pages/ProfilePage";
+import AcceptInvitePage from "@/pages/AcceptInvitePage";
 import NotFound from "@/pages/NotFound";
 import "@/i18n";
 
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/invite/:token" element={<AcceptInvitePage />} />
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
