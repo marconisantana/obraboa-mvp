@@ -143,12 +143,16 @@ export default function ProjectDetailPage() {
           <button
             key={key}
             onClick={() => {
-              if (key === 'schedule') {
+            if (key === 'schedule') {
                 navigate('/schedule');
               } else if (key === 'rdo') {
                 navigate('/rdo');
               } else if (key === 'checklists') {
                 navigate('/checklists');
+              } else if (key === 'purchases') {
+                navigate('/purchases');
+              } else if (key === 'dossiers') {
+                navigate('/dossiers');
               } else {
                 toast({ title: t('common.comingSoon') });
               }

@@ -163,6 +163,94 @@ export type Database = {
           },
         ]
       }
+      dossier_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          dossier_id: string
+          due_date: string
+          id: string
+          paid_date: string | null
+          receipt_path: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          dossier_id: string
+          due_date: string
+          id?: string
+          paid_date?: string | null
+          receipt_path?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          dossier_id?: string
+          due_date?: string
+          id?: string
+          paid_date?: string | null
+          receipt_path?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_payments_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossiers: {
+        Row: {
+          additive_value: number
+          agreed_value: number
+          created_at: string
+          id: string
+          name: string
+          observations: string | null
+          project_id: string
+          supplier_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additive_value?: number
+          agreed_value?: number
+          created_at?: string
+          id?: string
+          name: string
+          observations?: string | null
+          project_id: string
+          supplier_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          additive_value?: number
+          agreed_value?: number
+          created_at?: string
+          id?: string
+          name?: string
+          observations?: string | null
+          project_id?: string
+          supplier_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossiers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: string
@@ -228,6 +316,88 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          description: string
+          id: string
+          order_id: string
+          quantity: number
+          sort_order: number
+          unit: string
+        }
+        Insert: {
+          description: string
+          id?: string
+          order_id: string
+          quantity?: number
+          sort_order?: number
+          unit?: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          sort_order?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          id: string
+          observations: string | null
+          order_number: string
+          project_id: string
+          status: string
+          supplier_contact: string | null
+          supplier_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observations?: string | null
+          order_number: string
+          project_id: string
+          status?: string
+          supplier_contact?: string | null
+          supplier_name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observations?: string | null
+          order_number?: string
+          project_id?: string
+          status?: string
+          supplier_contact?: string | null
+          supplier_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rdo_photos: {
         Row: {

@@ -20,6 +20,10 @@ import RdoPage from "@/pages/RdoPage";
 import RdoDetail from "@/components/rdo/RdoDetail";
 import ChecklistsPage from "@/pages/ChecklistsPage";
 import ChecklistDetail from "@/components/checklist/ChecklistDetail";
+import PurchasesPage from "@/pages/PurchasesPage";
+import PurchaseOrderDetail from "@/components/purchases/PurchaseOrderDetail";
+import DossiersPage from "@/pages/DossiersPage";
+import DossierDetail from "@/components/dossiers/DossierDetail";
 import DocumentsPage from "@/pages/DocumentsPage";
 import ToolsPage from "@/pages/ToolsPage";
 import PendingPage from "@/pages/PendingPage";
@@ -56,6 +60,10 @@ const App = () => (
                 <Route path="/rdo/:id" element={<RdoDetail />} />
                 <Route path="/checklists" element={<ChecklistsPage />} />
                 <Route path="/checklists/:id" element={<ChecklistDetail />} />
+                <Route path="/purchases" element={<PurchasesPage />} />
+                <Route path="/purchases/:id" element={<PurchaseOrderDetail />} />
+                <Route path="/dossiers" element={<DossiersPage />} />
+                <Route path="/dossiers/:id" element={<DossierDetail />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/tools" element={<ToolsPage />} />
                 <Route path="/pending" element={<PendingPage />} />
