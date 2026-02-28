@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, CalendarDays, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,11 +14,19 @@ import WeeklySummary from '@/components/rdo/WeeklySummary';
 export default function RdoPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeProject = useAppStore((s) => s.activeProject);
   const { canEdit } = useProjectRole();
   const { rdos, isLoading } = useRdos();
   const [formOpen, setFormOpen] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && activeProject && canEdit) {
+      setFormOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, activeProject, canEdit]);
 
   if (!activeProject) {
     return (
