@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose } from '@/components/ui/drawer';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, FolderKanban, MapPin, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
 const statusColors: Record<ProjectStatus, string> = {
@@ -26,6 +27,7 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { projects, setProjects, activeProject, setActiveProject } = useAppStore();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -140,7 +142,10 @@ export default function ProjectsPage() {
               className={`cursor-pointer transition-shadow hover:shadow-md ${
                 activeProject?.id === project.id ? 'ring-2 ring-accent' : ''
               }`}
-              onClick={() => setActiveProject(project)}
+              onClick={() => {
+                setActiveProject(project);
+                navigate(`/projects/${project.id}`);
+              }}
               onDoubleClick={() => openEdit(project)}
             >
               <CardContent className="p-4 space-y-3">
@@ -177,14 +182,6 @@ export default function ProjectsPage() {
           ))}
         </div>
       )}
-
-      {/* FAB Mobile */}
-      <button
-        onClick={openNew}
-        className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg active:scale-95 transition-transform lg:hidden"
-      >
-        <Plus size={24} />
-      </button>
 
       {/* Drawer / Bottom Sheet */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>

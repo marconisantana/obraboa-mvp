@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import FAB from './FAB';
 
 export default function AppLayout() {
   return (
@@ -13,6 +14,7 @@ export default function AppLayout() {
           <Outlet />
         </div>
       </main>
+      <FAB />
       <BottomNav />
     </div>
   );

@@ -12,6 +12,7 @@ import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import HomePage from "@/pages/HomePage";
 import ProjectsPage from "@/pages/ProjectsPage";
+import ProjectDetailPage from "@/pages/ProjectDetailPage";
 import SchedulePage from "@/pages/SchedulePage";
 import DocumentsPage from "@/pages/DocumentsPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -39,6 +40,7 @@ const App = () => (
               <Route element={<AppLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
+                <Route path="/projects/:id" element={<ProjectDetailPage />} />
                 <Route path="/schedule" element={<SchedulePage />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
