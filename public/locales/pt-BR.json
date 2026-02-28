@@ -48,7 +48,7 @@
     "endDate": "Data prevista de término",
     "status": "Status",
     "planning": "Planejamento",
-    "inProgress": "Em andamento",
+    "in_progress": "Em andamento",
     "paused": "Pausada",
     "completed": "Concluída",
     "cancelled": "Cancelada",
@@ -80,13 +80,17 @@
     "noResults": "Nenhum resultado encontrado",
     "error": "Ocorreu um erro",
     "success": "Sucesso!",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "comingSoon": "Em breve"
   },
   "home": {
     "welcome": "Bem-vindo ao ObraBoa",
     "selectProject": "Selecione um projeto para começar",
     "recentActivity": "Atividade recente",
-    "noActivity": "Nenhuma atividade recente"
+    "noActivity": "Nenhuma atividade recente",
+    "emptyTitle": "Nenhuma atividade ainda",
+    "emptyCta": "Comece adicionando a primeira etapa do cronograma",
+    "pullToRefresh": "Solte para atualizar"
   },
   "schedule": {
     "title": "Cronograma",
@@ -95,5 +99,32 @@
   "documents": {
     "title": "Documentos",
     "comingSoon": "Em breve"
+  },
+  "fab": {
+    "quickActions": "Ações rápidas",
+    "newRdo": "Novo RDO",
+    "newStage": "Nova Etapa",
+    "newChecklist": "Novo Checklist",
+    "newOc": "Nova OC"
+  },
+  "projectView": {
+    "title": "Visão do Projeto",
+    "progress": "Progresso",
+    "startDate": "Início previsto",
+    "endDate": "Conclusão prevista",
+    "invite": "Convidar",
+    "members": "Membros",
+    "modules": {
+      "schedule": "Cronograma",
+      "rdo": "RDO",
+      "checklists": "Checklists",
+      "purchases": "Compras",
+      "dossiers": "Dossiês",
+      "references": "Referências"
+    }
+  },
+  "projectSelector": {
+    "select": "Selecione um projeto",
+    "allProjects": "Todos os projetos"
   }
 }
