@@ -142,7 +142,13 @@ export default function ProjectDetailPage() {
         {modules.map(({ key, icon: Icon }) => (
           <button
             key={key}
-            onClick={() => toast({ title: t('common.comingSoon') })}
+            onClick={() => {
+              if (key === 'schedule') {
+                navigate('/schedule');
+              } else {
+                toast({ title: t('common.comingSoon') });
+              }
+            }}
             className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 transition-colors hover:bg-secondary active:scale-95"
           >
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
