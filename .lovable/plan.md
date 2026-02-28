@@ -1,143 +1,159 @@
 
 
-## Calculadora de Rendimentos - Aba Ferramentas
+## Caderno de Referencias - Moodboard de Imagens
 
 ### Resumo
 
-Transformar a tela de Ferramentas (atualmente placeholder "Em breve") em uma calculadora de rendimentos de materiais de construcao. Tela 100% frontend, sem banco de dados, com selecao de material e calculos baseados em formulas padrao ABNT.
+Criar um modulo de referencias visuais estilo Pinterest, onde usuarios podem salvar imagens inspiracionais por projeto, organizadas por categorias (Sala, Cozinha, Banheiro, etc.), com upload local, URL externa e observacoes editaveis.
 
 ---
 
-### 1. Estrutura da tela
+### 1. Banco de dados
 
-A `ToolsPage` sera reescrita com:
+**Tabela `references`:**
 
-1. **Header** com titulo "Ferramentas" e subtitulo "Calculadora de Rendimentos"
-2. **Grid de selecao de material** (6 cards com icone visual):
-   - Ceramica/Porcelanato (Grid3x3)
-   - Argamassa (Layers)
-   - Rejunte (SquareDashed ou similar)
-   - Tinta (Paintbrush)
-   - Cimento (Package)
-   - Massa corrida (PaintRoller)
-3. **Formulario dinamico** que muda conforme o material selecionado
-4. **Area de resultado** com calculo e sugestao de compra
-5. **Botao "Nova Calculadora"** para reiniciar
+| Coluna | Tipo | Default | Nullable |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | No |
+| project_id | uuid | FK -> projects.id CASCADE | No |
+| user_id | uuid | auth.uid() | No |
+| image_url | text | - | No |
+| storage_path | text | null | Yes |
+| category | text | 'outros' | No |
+| observation | text | '' | Yes |
+| created_at | timestamptz | now() | No |
 
----
+- `image_url`: URL publica (do storage ou URL externa)
+- `storage_path`: preenchido apenas quando o upload e local (para poder deletar do storage)
 
-### 2. Inputs por material
+**Storage bucket**: `reference-images` (public).
 
-**Ceramica/Porcelanato:**
-- Area (m2) - input numerico
-- Perda (%) - input numerico, padrao 10
-- Tamanho da peca - select: 30x30, 45x45, 60x60, 80x80, 20x20 cm
-
-**Argamassa:**
-- Area (m2)
-- Tipo - select: AC-I, AC-II, AC-III
-
-**Rejunte:**
-- Area (m2)
-- Largura da junta (mm) - input numerico, padrao 3
-
-**Tinta:**
-- Area (m2)
-- Numero de demaos - select: 1, 2, 3
-- Tipo de tinta - select: Latex, Textura, Esmalte
-
-**Cimento:**
-- Volume (m3)
-- Traco - select: 1:2:3, 1:3:4, 1:2:4
-
-**Massa corrida:**
-- Area (m2)
-- Numero de demaos - select: 1, 2, 3
+**RLS**: Policies baseadas em `EXISTS (SELECT 1 FROM projects WHERE projects.id = references.project_id AND projects.owner_id = auth.uid())` para SELECT, INSERT, UPDATE e DELETE.
 
 ---
 
-### 3. Formulas de rendimento
+### 2. Traducoes (i18n)
 
-Todas baseadas em referencias padrao ABNT / mercado:
-
-- **Ceramica**: `pecas = (area * (1 + perda/100)) / areaPeca`. Resultado em m2 de piso + quantidade de caixas (arredondado para cima).
-- **Argamassa**: Rendimento medio por m2 conforme tipo (AC-I: ~5kg/m2, AC-II: ~5.5kg/m2, AC-III: ~5.5kg/m2). Resultado em kg, convertido para sacos de 20kg.
-- **Rejunte**: Formula baseada em area, largura da junta e espessura da peca. Rendimento medio ~0.5-1kg/m2. Resultado em kg, convertido para sacos de 1kg ou 5kg.
-- **Tinta**: Rendimento medio por tipo (Latex: ~10m2/L, Textura: ~4m2/kg, Esmalte: ~8m2/L). Multiplicar por demaos. Resultado em litros ou kg, convertido para latas de 18L ou galoes de 3.6L.
-- **Cimento**: Baseado no traco. Traco 1:2:3 = ~7 sacos de 50kg por m3 de concreto. Resultado em sacos de 50kg.
-- **Massa corrida**: Rendimento medio ~5m2/L por demao. Resultado em litros, convertido para latas de 18L.
-
-Margem de seguranca sugerida: +10% sobre o calculado.
-
----
-
-### 4. Output
-
-Card de resultado com:
-- Quantidade calculada (ex: "150 kg de argamassa AC-II")
-- Quantidade sugerida para compra com margem (ex: "~8 sacos de 20kg")
-- Unidade de medida claramente indicada
-- Alerta em tom informativo: "Verifique sempre o rendimento indicado na embalagem do fabricante"
-
----
-
-### 5. Traducoes (i18n)
-
-Novas chaves `tools` em `pt-BR.json` e `en-US.json`:
+Novas chaves `references` em `pt-BR.json` e `en-US.json`:
 
 ```text
-"tools": {
-  "title": "Ferramentas",
-  "yieldCalculator": "Calculadora de Rendimentos",
-  "selectMaterial": "Selecione o material",
-  "ceramic": "Ceramica/Porcelanato",
-  "mortar": "Argamassa",
-  "grout": "Rejunte",
-  "paint": "Tinta",
-  "cement": "Cimento",
-  "putty": "Massa corrida",
-  "area": "Area (m2)",
-  "volume": "Volume (m3)",
-  "wastePct": "Perda (%)",
-  "tileSize": "Tamanho da peca",
-  "mortarType": "Tipo de argamassa",
-  "jointWidth": "Largura da junta (mm)",
-  "coats": "Numero de demaos",
-  "paintType": "Tipo de tinta",
-  "mixRatio": "Traco",
-  "calculate": "Calcular",
-  "result": "Resultado",
-  "calculatedQty": "Quantidade calculada",
-  "suggestedPurchase": "Sugestao de compra",
-  "unit": "Unidade",
-  "newCalculation": "Nova Calculadora",
-  "disclaimer": "Verifique sempre o rendimento indicado na embalagem do fabricante",
-  "bags": "sacos",
-  "liters": "litros",
-  "cans": "latas",
-  "sqMeters": "m2",
-  "latex": "Latex",
-  "texture": "Textura",
-  "enamel": "Esmalte",
-  "safetyMargin": "inclui margem de 10%"
+"references": {
+  "title": "Referencias",
+  "new": "Nova referencia",
+  "addFromUrl": "Adicionar por URL",
+  "uploadImage": "Enviar imagem",
+  "imageUrl": "URL da imagem",
+  "observation": "Observacao",
+  "category": "Categoria",
+  "all": "Todos",
+  "livingRoom": "Sala",
+  "kitchen": "Cozinha",
+  "bathroom": "Banheiro",
+  "bedroom": "Quarto",
+  "facade": "Fachada",
+  "other": "Outros",
+  "noReferences": "Nenhuma referencia salva",
+  "noReferencesDesc": "Salve imagens de inspiracao para sua obra",
+  "deleteConfirm": "Tem certeza que deseja excluir esta referencia?",
+  "share": "Compartilhar",
+  "selectProject": "Selecione um projeto para ver as referencias",
+  "preview": "Pre-visualizar",
+  "invalidUrl": "URL invalida"
 }
 ```
 
 ---
 
+### 3. Hook `useReferences`
+
+Criar `src/hooks/useReferences.ts`:
+
+- `fetchReferences(projectId, category?)`: lista referencias, com filtro opcional por categoria
+- `createFromUpload(projectId, file, category, observation)`: upload para bucket `reference-images` + insert
+- `createFromUrl(projectId, imageUrl, category, observation)`: insert direto com URL externa
+- `updateObservation(refId, observation)`: atualiza observacao
+- `updateCategory(refId, category)`: atualiza categoria
+- `deleteReference(refId)`: remove do storage (se storage_path) + deleta do banco
+
+---
+
+### 4. Componentes
+
+**`src/components/references/ReferenceCard.tsx`:**
+- Card com imagem (aspect-ratio livre, masonry), badge de categoria colorido, preview truncado da observacao
+- Click abre modal de detalhe
+- Layout pensado para grid masonry
+
+**`src/components/references/ReferenceDetailDialog.tsx`:**
+- Modal com imagem em destaque (grande)
+- Campo de observacao editavel (textarea com auto-save ou botao salvar)
+- Select de categoria editavel
+- Botoes: compartilhar, excluir
+
+**`src/components/references/AddReferenceDialog.tsx`:**
+- Dialog com duas abas: "Enviar imagem" e "Adicionar por URL"
+- Aba upload: input file (accept images) + preview da imagem selecionada
+- Aba URL: input de URL + botao preview (carrega `<img>` para validar)
+- Select de categoria
+- Campo de observacao (opcional)
+- Botao salvar
+
+**`src/components/references/CategoryFilter.tsx`:**
+- Barra horizontal com chips/badges filtraveis
+- Categorias: Todos | Sala | Cozinha | Banheiro | Quarto | Fachada | Outros
+- Click em uma categoria filtra o grid
+
+---
+
+### 5. Pagina ReferencesPage
+
+Criar `src/pages/ReferencesPage.tsx`:
+
+- Sem projeto ativo: mensagem pedindo selecionar
+- Header com titulo + botao "+ Nova referencia"
+- Barra de filtro de categorias (CategoryFilter)
+- Grid masonry: CSS columns (2 colunas mobile, 3 desktop) com `break-inside: avoid`
+- Cada card renderiza ReferenceCard
+- Estado vazio com ilustracao e CTA
+
+---
+
+### 6. Roteamento e Navegacao
+
+- Adicionar rota `/references` em `App.tsx` (dentro das rotas protegidas com AppLayout)
+- Adicionar modulo "Referencias" no grid de atalhos do `ProjectDetailPage` com icone `ImagePlus` ou `Images`
+- Adicionar na navegacao lateral/bottom se aplicavel
+
+---
+
+### 7. Compartilhamento
+
+- Botao compartilhar no detalhe: usa Web Share API (`navigator.share`) com a URL da imagem + texto da observacao
+- Fallback: copiar link da imagem para clipboard
+
+---
+
 ### Detalhes Tecnicos
 
-- **Sem banco de dados**: Tudo no frontend, sem persistencia. State local com `useState`.
-- **Componente unico**: Criar `src/components/tools/YieldCalculator.tsx` com toda a logica de calculo e formulario.
-- **ToolsPage.tsx**: Reescrever para renderizar o `YieldCalculator`.
-- **Formulas**: Objeto de configuracao com rendimentos por material e tipo, facilitando manutencao.
-- **Formatacao**: Numeros com `toFixed(1)` ou `Math.ceil` para quantidades inteiras (sacos, latas).
-- **Responsividade**: Grid de materiais 2x3 em mobile, 3x2 em desktop.
+- **Masonry CSS**: Usar `columns: 2` (mobile) / `columns: 3` (desktop) com `break-inside: avoid` em cada card. Simples e sem dependencia extra.
+- **Upload**: Bucket `reference-images`, path `{project_id}/{uuid}.{ext}`. Gera URL publica apos upload.
+- **URL externa**: Valida carregando a imagem em um `<img>` onerror/onload antes de salvar.
+- **Categorias**: Array fixo no frontend. O campo `category` e texto livre, permitindo expansao futura.
+- **Badge de categoria**: Cores mapeadas por categoria (azul=Sala, verde=Cozinha, rosa=Banheiro, etc.).
+- **Auto-save observacao**: Debounce de 1s no textarea do detalhe, ou botao salvar explicito.
 
 ### Arquivos a criar
-- `src/components/tools/YieldCalculator.tsx`
+- Migracao SQL (1 tabela + bucket + RLS)
+- `src/hooks/useReferences.ts`
+- `src/components/references/ReferenceCard.tsx`
+- `src/components/references/ReferenceDetailDialog.tsx`
+- `src/components/references/AddReferenceDialog.tsx`
+- `src/components/references/CategoryFilter.tsx`
+- `src/pages/ReferencesPage.tsx`
 
 ### Arquivos a modificar
-- `src/pages/ToolsPage.tsx` (renderizar YieldCalculator)
-- `public/locales/pt-BR.json` (novas chaves tools)
-- `public/locales/en-US.json` (novas chaves tools)
+- `src/App.tsx` (nova rota /references)
+- `src/pages/ProjectDetailPage.tsx` (adicionar atalho "Referencias" no grid de modulos)
+- `public/locales/pt-BR.json` (novas chaves references)
+- `public/locales/en-US.json` (novas chaves references)
+
