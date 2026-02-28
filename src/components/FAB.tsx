@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, FileText, CalendarDays, CheckSquare, ShoppingCart } from 'lucide-react';
+import { Plus, FileText, CalendarDays, CheckSquare, ShoppingCart, FolderKanban } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useToast } from '@/hooks/use-toast';
+import CreateProjectModal from '@/components/profile/CreateProjectModal';
 
 export default function FAB() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
   const actions = [
+    { icon: FolderKanban, label: t('projects.new'), key: 'project' },
     { icon: FileText, label: t('fab.newRdo'), key: 'rdo' },
     { icon: CalendarDays, label: t('fab.newStage'), key: 'stage' },
     { icon: CheckSquare, label: t('fab.newChecklist'), key: 'checklist' },
@@ -18,7 +21,11 @@ export default function FAB() {
 
   const handleAction = (key: string) => {
     setOpen(false);
-    toast({ title: t('common.comingSoon') });
+    if (key === 'project') {
+      setCreateProjectOpen(true);
+    } else {
+      toast({ title: t('common.comingSoon') });
+    }
   };
 
   return (
@@ -52,6 +59,8 @@ export default function FAB() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      <CreateProjectModal open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
     </>
   );
 }
