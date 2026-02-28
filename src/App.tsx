@@ -26,6 +26,7 @@ import DossiersPage from "@/pages/DossiersPage";
 import DossierDetail from "@/components/dossiers/DossierDetail";
 import DocumentsPage from "@/pages/DocumentsPage";
 import ToolsPage from "@/pages/ToolsPage";
+import ReferencesPage from "@/pages/ReferencesPage";
 import PendingPage from "@/pages/PendingPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotFound from "@/pages/NotFound";
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="/dossiers/:id" element={<DossierDetail />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/tools" element={<ToolsPage />} />
+                <Route path="/references" element={<ReferencesPage />} />
                 <Route path="/pending" element={<PendingPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>

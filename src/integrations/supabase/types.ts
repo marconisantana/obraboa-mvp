@@ -374,6 +374,47 @@ export type Database = {
         }
         Relationships: []
       }
+      project_references: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          image_url: string
+          observation: string | null
+          project_id: string
+          storage_path: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          image_url: string
+          observation?: string | null
+          project_id: string
+          storage_path?: string | null
+          user_id?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          observation?: string | null
+          project_id?: string
+          storage_path?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           address: string | null

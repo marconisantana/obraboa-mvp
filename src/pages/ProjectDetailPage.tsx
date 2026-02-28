@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   CalendarDays, FileText, CheckSquare, ShoppingCart,
-  FolderArchive, BookImage, MapPin, UserPlus, ArrowLeft,
+  FolderArchive, BookImage, Images, MapPin, UserPlus, ArrowLeft,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -53,6 +53,7 @@ export default function ProjectDetailPage() {
     { key: 'purchases', icon: ShoppingCart },
     { key: 'dossiers', icon: FolderArchive },
     { key: 'documents', icon: BookImage },
+    { key: 'references', icon: Images },
   ];
 
   return (
@@ -155,6 +156,8 @@ export default function ProjectDetailPage() {
                 navigate('/dossiers');
               } else if (key === 'documents') {
                 navigate('/documents');
+              } else if (key === 'references') {
+                navigate('/references');
               } else {
                 toast({ title: t('common.comingSoon') });
               }
