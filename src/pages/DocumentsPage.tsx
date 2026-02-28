@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FolderPlus, Upload, FileText, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
+import { useProjectRole } from '@/hooks/useProjectRole';
 import { useDocuments, type DocumentFolder, type DocumentFile } from '@/hooks/useDocuments';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export default function DocumentsPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const activeProject = useAppStore((s) => s.activeProject);
+  const { canEdit } = useProjectRole();
   const projectId = activeProject?.id;
 
   const {
@@ -162,26 +164,30 @@ export default function DocumentsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">{t('documents.title')}</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowCreateFolder(true)}>
-            <FolderPlus size={16} className="mr-1" />
-            {t('documents.newFolder')}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Upload size={16} className="mr-1" />}
-            {uploading ? t('documents.uploading') : t('documents.uploadFiles')}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".pdf,.jpeg,.jpg,.png,.xlsx,.xls,.dwg"
-            className="hidden"
-            onChange={handleUpload}
-          />
+          {canEdit && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setShowCreateFolder(true)}>
+                <FolderPlus size={16} className="mr-1" />
+                {t('documents.newFolder')}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Upload size={16} className="mr-1" />}
+                {uploading ? t('documents.uploading') : t('documents.uploadFiles')}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.jpeg,.jpg,.png,.xlsx,.xls,.dwg"
+                className="hidden"
+                onChange={handleUpload}
+              />
+            </>
+          )}
         </div>
       </div>
 

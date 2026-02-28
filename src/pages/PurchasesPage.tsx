@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/stores/useAppStore';
+import { useProjectRole } from '@/hooks/useProjectRole';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { Button } from '@/components/ui/button';
 import { Plus, ShoppingCart } from 'lucide-react';
@@ -10,6 +11,7 @@ import PurchaseOrderForm from '@/components/purchases/PurchaseOrderForm';
 export default function PurchasesPage() {
   const { t } = useTranslation();
   const activeProject = useAppStore((s) => s.activeProject);
+  const { canEdit } = useProjectRole();
   const { ordersQuery, generateOrderNumber, createOrder } = usePurchaseOrders(activeProject?.id);
   const [formOpen, setFormOpen] = useState(false);
   const [nextNumber, setNextNumber] = useState('');
@@ -42,9 +44,11 @@ export default function PurchasesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">{t('purchases.title')}</h1>
-        <Button size="sm" onClick={handleOpenNew}>
-          <Plus size={14} className="mr-1" /> {t('purchases.new')}
-        </Button>
+        {canEdit && (
+          <Button size="sm" onClick={handleOpenNew}>
+            <Plus size={14} className="mr-1" /> {t('purchases.new')}
+          </Button>
+        )}
       </div>
 
       {orders.length === 0 ? (

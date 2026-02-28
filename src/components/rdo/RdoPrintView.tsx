@@ -15,6 +15,9 @@ export default function RdoPrintView({ rdo }: RdoPrintViewProps) {
         @media print {
           body > *:not(.print-content-wrapper) { display: none !important; }
           .print-content-wrapper { display: block !important; }
+          tr { page-break-inside: avoid; }
+          .photo-block { page-break-inside: avoid; }
+          .section-block { page-break-inside: avoid; }
         }
       `}</style>
 
@@ -23,14 +26,14 @@ export default function RdoPrintView({ rdo }: RdoPrintViewProps) {
         <p className="text-lg mb-6 capitalize">{dateFormatted}</p>
 
         {rdo.activities && (
-          <div className="mb-4">
+          <div className="mb-4 section-block">
             <h2 className="text-lg font-semibold mb-1">Atividades Realizadas</h2>
             <p className="whitespace-pre-wrap">{rdo.activities}</p>
           </div>
         )}
 
         {rdo.team_members.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-4 section-block">
             <h2 className="text-lg font-semibold mb-1">Equipe Presente</h2>
             <table className="w-full border-collapse border text-sm">
               <thead>
@@ -54,11 +57,11 @@ export default function RdoPrintView({ rdo }: RdoPrintViewProps) {
         )}
 
         {rdo.photos.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-4 section-block">
             <h2 className="text-lg font-semibold mb-1">Fotos</h2>
             <div className="grid grid-cols-2 gap-4">
               {rdo.photos.map((photo) => (
-                <div key={photo.id}>
+                <div key={photo.id} className="photo-block">
                   <img src={photo.url} alt={photo.caption || ''} className="w-full h-48 object-cover" />
                   {photo.caption && <p className="text-xs mt-1">{photo.caption}</p>}
                 </div>
@@ -68,7 +71,7 @@ export default function RdoPrintView({ rdo }: RdoPrintViewProps) {
         )}
 
         {rdo.observations && (
-          <div className="mb-4">
+          <div className="mb-4 section-block">
             <h2 className="text-lg font-semibold mb-1">Observações</h2>
             <p className="whitespace-pre-wrap">{rdo.observations}</p>
           </div>

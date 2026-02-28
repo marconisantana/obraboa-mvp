@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays, Plus, ArrowUpDown } from 'lucide-react';
 import { useAppStore } from '@/stores/useAppStore';
+import { useProjectRole } from '@/hooks/useProjectRole';
 import { useStages, type Stage } from '@/hooks/useStages';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ export default function SchedulePage() {
   const { toast } = useToast();
   const activeProject = useAppStore((s) => s.activeProject);
   const { stages, isLoading, createStage, updateStage, deleteStage, getDependents, applyDateDeltaToDependents } = useStages(activeProject?.id);
+  const { canEdit } = useProjectRole();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
@@ -162,10 +164,12 @@ export default function SchedulePage() {
               <DropdownMenuItem onClick={() => setSortMode('status')}>{t('schedule.sortByStatus')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" onClick={() => { setEditingStage(null); setFormOpen(true); }}>
-            <Plus size={14} className="mr-1" />
-            {t('schedule.addStage')}
-          </Button>
+          {canEdit && (
+            <Button size="sm" onClick={() => { setEditingStage(null); setFormOpen(true); }}>
+              <Plus size={14} className="mr-1" />
+              {t('schedule.addStage')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -176,7 +180,7 @@ export default function SchedulePage() {
           <CalendarDays size={48} className="mb-3 text-muted-foreground/50" />
           <p className="font-semibold">{t('schedule.noStages')}</p>
           <p className="text-sm text-muted-foreground mb-4">{t('schedule.noStagesDesc')}</p>
-          <Button onClick={() => { setEditingStage(null); setFormOpen(true); }}>
+          <Button onClick={() => { setEditingStage(null); setFormOpen(true); }} disabled={!canEdit}>
             <Plus size={14} className="mr-1" />
             {t('schedule.addStage')}
           </Button>

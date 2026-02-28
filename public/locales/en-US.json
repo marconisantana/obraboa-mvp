@@ -430,6 +430,15 @@
     "inviteAccepted": "Invite accepted! You are now a project member.",
     "inviteExpired": "This invite has expired or has already been used.",
     "inviteNotFound": "Invite not found.",
-    "loginToAccept": "Log in or create an account to accept this invite."
+    "loginToAccept": "Log in or create an account to accept this invite.",
+    "requestNewInvite": "Ask the project owner to send a new invite link."
+  },
+  "planGate": {
+    "title": "Upgrade required",
+    "description": "The free plan allows only 1 project. Upgrade to create more projects."
+  },
+  "offline": {
+    "title": "No connection",
+    "description": "Some features may be unavailable."
   }
 }

@@ -45,9 +45,11 @@ export default function CreateProjectModal({ open, onOpenChange }: CreateProject
 
   const typeKeys = ['residencial', 'comercial', 'reforma', 'flip'] as const;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
+    const { compressImage } = await import('@/lib/compressImage');
+    const file = await compressImage(rawFile);
     setCoverFile(file);
     const reader = new FileReader();
     reader.onload = () => setCoverPreview(reader.result as string);

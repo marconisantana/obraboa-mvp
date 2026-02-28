@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/stores/useAppStore';
+import { useProjectRole } from '@/hooks/useProjectRole';
 import { useDossiers } from '@/hooks/useDossiers';
 import { Button } from '@/components/ui/button';
 import { Plus, FolderArchive } from 'lucide-react';
@@ -10,6 +11,7 @@ import DossierForm from '@/components/dossiers/DossierForm';
 export default function DossiersPage() {
   const { t } = useTranslation();
   const activeProject = useAppStore((s) => s.activeProject);
+  const { canEdit } = useProjectRole();
   const { dossiersQuery, createDossier } = useDossiers(activeProject?.id);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -35,9 +37,11 @@ export default function DossiersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">{t('dossiers.title')}</h1>
-        <Button size="sm" onClick={() => setFormOpen(true)}>
-          <Plus size={14} className="mr-1" /> {t('dossiers.new')}
-        </Button>
+        {canEdit && (
+          <Button size="sm" onClick={() => setFormOpen(true)}>
+            <Plus size={14} className="mr-1" /> {t('dossiers.new')}
+          </Button>
+        )}
       </div>
 
       {dossiers.length === 0 ? (

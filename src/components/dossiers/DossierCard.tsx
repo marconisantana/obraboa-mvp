@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { AlertTriangle } from 'lucide-react';
 import type { Dossier } from '@/hooks/useDossiers';
 
 const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -29,7 +30,8 @@ export default function DossierCard({ dossier }: { dossier: Dossier }) {
             <p className="font-bold text-sm">{dossier.name}</p>
             {dossier.supplier_name && <p className="text-xs text-muted-foreground">{dossier.supplier_name}</p>}
           </div>
-          <Badge variant="secondary" className={statusColors[dossier.computed_status || 'in_progress']}>
+          <Badge variant="secondary" className={`${statusColors[dossier.computed_status || 'in_progress']} flex items-center gap-1`}>
+            {(dossier.computed_status === 'exceeded') && <AlertTriangle size={12} />}
             {t(`dossiers.${dossier.computed_status || 'in_progress'}`)}
           </Badge>
         </div>
