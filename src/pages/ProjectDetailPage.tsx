@@ -10,6 +10,10 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useStages } from '@/hooks/useStages';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const statusColors: Record<ProjectStatus, string> = {
   planning: 'bg-blue-100 text-blue-700',
@@ -19,13 +23,13 @@ const statusColors: Record<ProjectStatus, string> = {
   cancelled: 'bg-destructive/20 text-destructive',
 };
 
-const mockMembers = [
-  { initials: 'MS', name: 'Maria Silva' },
-  { initials: 'JP', name: 'João Pereira' },
-  { initials: 'AC', name: 'Ana Costa' },
-];
-
-const MOCK_PROGRESS = 35;
+interface MemberInfo {
+  id: string;
+  role: string;
+  full_name: string;
+  avatar_url: string | null;
+  initials: string;
+}
 
 export default function ProjectDetailPage() {
   const { t } = useTranslation();
@@ -34,6 +38,57 @@ export default function ProjectDetailPage() {
   const { toast } = useToast();
   const projects = useAppStore((s) => s.projects);
   const project = projects.find((p) => p.id === id);
+
+  const { stages } = useStages(id);
+  const progress = stages.length > 0
+    ? Math.round(stages.reduce((sum, s) => sum + s.progress, 0) / stages.length)
+    : 0;
+
+  const [members, setMembers] = useState<MemberInfo[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data } = await supabase
+        .from('project_members' as any)
+        .select('id, role, profile_id')
+        .eq('project_id', id);
+
+      if (!data || data.length === 0) {
+        setMembers([]);
+        return;
+      }
+
+      const profileIds = (data as any[]).map((m: any) => m.profile_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', profileIds);
+
+      const profileMap = Object.fromEntries(
+        (profiles ?? []).map((p) => [p.id, p])
+      );
+
+      setMembers(
+        (data as any[]).map((m: any) => {
+          const prof = profileMap[m.profile_id] || { full_name: '', avatar_url: null };
+          const initials = prof.full_name
+            .split(' ')
+            .map((w: string) => w[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+          return {
+            id: m.id,
+            role: m.role,
+            full_name: prof.full_name,
+            avatar_url: prof.avatar_url,
+            initials,
+          };
+        })
+      );
+    })();
+  }, [id]);
 
   if (!project) {
     return (
@@ -58,7 +113,6 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back button */}
       <button
         onClick={() => navigate('/projects')}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -67,7 +121,6 @@ export default function ProjectDetailPage() {
         {t('common.back')}
       </button>
 
-      {/* Cover / Header card */}
       <Card className="overflow-hidden">
         <div className="h-24 bg-primary/10" />
         <CardContent className="space-y-4 p-4 -mt-6">
@@ -84,16 +137,14 @@ export default function ProjectDetailPage() {
             {t(`projects.${project.status}`)}
           </span>
 
-          {/* Progress */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">{t('projectView.progress')}</span>
-              <span className="font-semibold">{MOCK_PROGRESS}%</span>
+              <span className="font-semibold">{progress}%</span>
             </div>
-            <Progress value={MOCK_PROGRESS} className="h-2" />
+            <Progress value={progress} className="h-2" />
           </div>
 
-          {/* Dates */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">{t('projectView.startDate')}</p>
@@ -109,19 +160,17 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          {/* Members */}
           <div>
             <p className="text-sm text-muted-foreground mb-2">{t('projectView.members')}</p>
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2">
-                {mockMembers.map((m) => (
-                  <div
-                    key={m.initials}
-                    title={m.name}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-card bg-primary/10 text-xs font-semibold text-primary"
-                  >
-                    {m.initials}
-                  </div>
+                {members.map((m) => (
+                  <Avatar key={m.id} className="h-9 w-9 border-2 border-card">
+                    <AvatarImage src={m.avatar_url ?? undefined} alt={m.full_name} />
+                    <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                      {m.initials}
+                    </AvatarFallback>
+                  </Avatar>
                 ))}
               </div>
               <Button
@@ -138,29 +187,18 @@ export default function ProjectDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Module shortcuts */}
       <div className="grid grid-cols-3 gap-3">
         {modules.map(({ key, icon: Icon }) => (
           <button
             key={key}
             onClick={() => {
-            if (key === 'schedule') {
-                navigate('/schedule');
-              } else if (key === 'rdo') {
-                navigate('/rdo');
-              } else if (key === 'checklists') {
-                navigate('/checklists');
-              } else if (key === 'purchases') {
-                navigate('/purchases');
-              } else if (key === 'dossiers') {
-                navigate('/dossiers');
-              } else if (key === 'documents') {
-                navigate('/documents');
-              } else if (key === 'references') {
-                navigate('/references');
-              } else {
-                toast({ title: t('common.comingSoon') });
-              }
+              const routes: Record<string, string> = {
+                schedule: '/schedule', rdo: '/rdo', checklists: '/checklists',
+                purchases: '/purchases', dossiers: '/dossiers', documents: '/documents',
+                references: '/references',
+              };
+              if (routes[key]) navigate(routes[key]);
+              else toast({ title: t('common.comingSoon') });
             }}
             className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 transition-colors hover:bg-secondary active:scale-95"
           >
