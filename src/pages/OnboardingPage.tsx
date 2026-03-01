@@ -12,8 +12,12 @@ const slideVariants = {
   exit: (direction: number) => ({ x: direction > 0 ? -300 : 300, opacity: 0 }),
 };
 
-/* overlay que cobre a imagem, pesado no fundo para legibilidade */
-const IMG_OVERLAY = 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 40%, rgba(13,50,89,0.92) 70%, rgba(13,50,89,1) 100%)';
+/* overlays diferentes por step para legibilidade otimizada */
+const IMG_OVERLAYS = [
+  'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 40%, rgba(13,50,89,0.92) 70%, rgba(13,50,89,1) 100%)',
+  'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 40%, rgba(13,50,89,0.92) 70%, rgba(13,50,89,1) 100%)',
+  'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.20) 35%, rgba(13,50,89,0.85) 65%, rgba(13,50,89,1) 100%)',
+];
 
 export default function OnboardingPage() {
   const { t } = useTranslation();
@@ -70,7 +74,13 @@ export default function OnboardingPage() {
         <div
           key={i}
           className="flex items-center gap-4 p-4"
-          style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '16px' }}
+          style={{
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.20)',
+            borderRadius: '16px',
+            padding: '16px',
+            backdropFilter: 'blur(4px)',
+          }}
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(245,158,11,0.20)' }}>
             <f.icon className="w-5 h-5" style={{ color: '#F59E0B' }} />
@@ -128,7 +138,7 @@ export default function OnboardingPage() {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: imgPositions[step] }}
         />
-        <div className="absolute inset-0" style={{ background: IMG_OVERLAY }} />
+        <div className="absolute inset-0" style={{ background: IMG_OVERLAYS[step] }} />
       </div>
 
       {/* ── Top bar: back + skip ── */}
@@ -150,15 +160,14 @@ export default function OnboardingPage() {
         </button>
       </div>
 
-      {/* ── Logo no step 1 ── */}
+      {/* ── Logo no step 1 — canto superior esquerdo ── */}
       {step === 0 && (
-        <div className="relative z-10 flex justify-center pt-4">
-          <img
-            src="/icon-obraboa-navy.svg"
-            alt="ObraBoa"
-            style={{ width: '200px', filter: 'brightness(0) invert(1)' }}
-          />
-        </div>
+        <img
+          src="/icon-obraboa-navy.svg"
+          alt="ObraBoa"
+          className="absolute z-20"
+          style={{ top: '56px', left: '24px', width: '120px', filter: 'brightness(0) invert(1)' }}
+        />
       )}
 
       {/* ── Espaçador ── */}
