@@ -38,7 +38,8 @@ export default function ProjectsPage() {
   const { toast } = useToast();
   const { projects, setProjects, activeProject, setActiveProject } = useAppStore();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  // Se a store já tem projetos (carregados pelo AuthContext), não mostrar skeleton
+  const [loading, setLoading] = useState(projects.length === 0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
@@ -49,6 +50,8 @@ export default function ProjectsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Fetch de sincronização: atualiza a store com dados frescos do servidor
+  // (sem mostrar loading quando store já tem dados)
   useEffect(() => {
     fetchProjects();
   }, []);
