@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,8 +6,10 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* #F8FAFC */
-    --foreground: 215 28% 17%; /* #1E293B */
+    --background: 213 36% 95%;
+    /* #EDF2F7 — cinza-azulado FamilyWall */
+    --foreground: 215 40% 14%;
+    /* #111827 navy escuro */
 
     --card: 0 0% 100%;
     --card-foreground: 215 28% 17%;
@@ -15,25 +17,31 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 28% 17%;
 
-    --primary: 213 53% 23%; /* #1B3A5C */
+    --primary: 214 74% 20%;
+    /* #0D3259 */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96%;
     --secondary-foreground: 213 53% 23%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%; /* #64748B */
+    --muted-foreground: 215 16% 47%;
+    /* #64748B */
 
-    --accent: 38 92% 50%; /* #F59E0B */
+    --accent: 38 92% 50%;
+    /* #F59E0B */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%; /* #EF4444 */
+    --destructive: 0 84% 60%;
+    /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%; /* #22C55E */
+    --success: 142 71% 45%;
+    /* #22C55E */
     --success-foreground: 0 0% 100%;
 
     --border: 214 32% 91%;
+    /* quase invisível */
     --input: 214 32% 91%;
     --ring: 213 53% 23%;
 
@@ -99,7 +107,7 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Nunito', 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -118,5 +126,21 @@
 
   .font-nunito {
     font-family: 'Nunito', sans-serif;
+  }
+
+  /* FamilyWall-style card shadow — sem borda, só sombra difusa */
+  .card-shadow {
+    box-shadow: 0 2px 16px rgba(13, 50, 89, 0.07), 0 1px 4px rgba(13, 50, 89, 0.04);
+    border: none !important;
+  }
+
+  /* Sombra hover mais pronunciada */
+  .card-shadow-hover {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .card-shadow-hover:hover {
+    box-shadow: 0 6px 24px rgba(13, 50, 89, 0.12), 0 2px 8px rgba(13, 50, 89, 0.06);
+    transform: translateY(-1px);
   }
 }

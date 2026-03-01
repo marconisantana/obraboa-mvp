@@ -47,13 +47,13 @@ export default function ProjectDetailPage() {
   }
 
   const modules = [
-    { key: 'schedule', icon: CalendarDays },
-    { key: 'rdo', icon: FileText },
-    { key: 'checklists', icon: CheckSquare },
-    { key: 'purchases', icon: ShoppingCart },
-    { key: 'dossiers', icon: FolderArchive },
-    { key: 'documents', icon: BookImage },
-    { key: 'references', icon: Images },
+    { key: 'schedule', icon: CalendarDays, color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+    { key: 'rdo', icon: FileText, color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
+    { key: 'checklists', icon: CheckSquare, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
+    { key: 'purchases', icon: ShoppingCart, color: '#EF4444', bg: 'rgba(239,68,68,0.12)' },
+    { key: 'dossiers', icon: FolderArchive, color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)' },
+    { key: 'documents', icon: BookImage, color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+    { key: 'references', icon: Images, color: '#EC4899', bg: 'rgba(236,72,153,0.12)' },
   ];
 
   return (
@@ -110,7 +110,7 @@ export default function ProjectDetailPage() {
       </Card>
 
       <div className="grid grid-cols-3 gap-3">
-        {modules.map(({ key, icon: Icon }) => (
+        {modules.map(({ key, icon: Icon, color, bg }) => (
           <button
             key={key}
             onClick={() => {
@@ -122,12 +122,18 @@ export default function ProjectDetailPage() {
               if (routes[key]) navigate(routes[key]);
               else toast({ title: t('common.comingSoon') });
             }}
-            className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 transition-colors hover:bg-secondary active:scale-95"
+            className="flex flex-col items-center gap-2 rounded-2xl bg-white active:scale-95 transition-transform"
+            style={{ padding: '20px 12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
-              <Icon size={20} className="text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ backgroundColor: bg }}>
+              <Icon size={28} style={{ color }} />
             </div>
-            <span className="text-xs font-medium text-center">{t(`projectView.modules.${key}`)}</span>
+            <span
+              className="text-center font-semibold leading-tight"
+              style={{ fontSize: '13px', color: '#374151' }}
+            >
+              {t(`projectView.modules.${key}`)}
+            </span>
           </button>
         ))}
       </div>

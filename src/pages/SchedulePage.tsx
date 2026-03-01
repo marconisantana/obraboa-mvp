@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CalendarDays, Plus, ArrowUpDown } from 'lucide-react';
@@ -28,7 +28,9 @@ import StageCard from '@/components/schedule/StageCard';
 import StageForm from '@/components/schedule/StageForm';
 import GanttTimeline from '@/components/schedule/GanttTimeline';
 import DependencyDialog from '@/components/schedule/DependencyDialog';
+import { StageCardSkeleton } from '@/components/ui/card-skeleton';
 import { differenceInDays } from 'date-fns';
+import NoProjectBanner from '@/components/NoProjectBanner';
 
 type SortMode = 'date' | 'status';
 
@@ -145,15 +147,8 @@ export default function SchedulePage() {
     setDeleteTarget(null);
   }, [deleteTarget, deleteStage, toast, t]);
 
-  // No active project
   if (!activeProject) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <CalendarDays size={48} className="mb-3 text-muted-foreground/50" />
-        <h1 className="text-xl font-bold">{t('schedule.title')}</h1>
-        <p className="text-muted-foreground">{t('schedule.selectProject')}</p>
-      </div>
-    );
+    return <NoProjectBanner icon={CalendarDays} title={t('schedule.title')} />;
   }
 
   return (
@@ -184,7 +179,9 @@ export default function SchedulePage() {
       </div>
 
       {isLoading ? (
-        <p className="text-center text-muted-foreground py-12">{t('common.loading')}</p>
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => <StageCardSkeleton key={i} />)}
+        </div>
       ) : stages.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <CalendarDays size={48} className="mb-3 text-muted-foreground/50" />

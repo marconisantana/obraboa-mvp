@@ -42,15 +42,39 @@ export default function ReferencesPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">{t('references.title')}</h1>
-        {canEdit && (
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <ImagePlus size={16} />
-            {t('references.new')}
-          </Button>
-        )}
+      {/* Header com imagem de campanha */}
+      <div
+        className="relative overflow-hidden flex items-end p-4"
+        style={{
+          height: '140px',
+          borderRadius: '16px 16px 0 0',
+        }}
+      >
+        <img
+          src="/images/campanha/reforma_04_escolha_materiais.jpeg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: 'center 40%' }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(transparent 30%, rgba(13,50,89,0.80) 100%)',
+          }}
+        />
+        <div className="relative z-10 flex items-center justify-between w-full">
+          <h1 className="font-bold text-white text-xl">{t('references.title')}</h1>
+          {canEdit && (
+            <button
+              onClick={() => setAddOpen(true)}
+              className="flex items-center gap-1.5 rounded-full font-semibold text-sm px-3 py-1.5"
+              style={{ backgroundColor: '#F59E0B', color: '#0D3259' }}
+            >
+              <ImagePlus size={15} />
+              {t('references.new')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Category filter */}

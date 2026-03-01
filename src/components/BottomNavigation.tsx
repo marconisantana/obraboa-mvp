@@ -16,8 +16,8 @@ export default function BottomNavigation() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] safe-top">
-      <div className="flex h-16 items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#F3F4F6] shadow-[0_-2px_12px_rgba(0,0,0,0.06)] safe-bottom">
+      <div className="flex h-[60px] items-center justify-around">
         {navItems.map(({ key, path, icon: Icon }) => {
           const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
           return (

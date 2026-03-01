@@ -117,7 +117,10 @@
     "error": "Ocorreu um erro",
     "success": "Sucesso!",
     "confirm": "Confirmar",
-    "comingSoon": "Em breve"
+    "comingSoon": "Em breve",
+    "selectProjectFirst": "Selecione uma obra para ver este módulo",
+    "goToProjects": "Ir para Obras",
+    "selectProjectHint": "Toque em uma obra para selecioná-la como ativa"
   },
   "home": {
     "welcome": "Bem-vindo ao ObraBoa",

@@ -8,14 +8,14 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-background">
       <OfflineDetector />
-      <BottomNavigation />
       <Header />
-      <main className="momentum-scroll pt-16 pb-6">
+      <main className="momentum-scroll pt-14 pb-[calc(4rem+env(safe-area-inset-bottom,0px)+1.5rem)]">
         <div className="mx-auto max-w-5xl p-4">
           <Outlet />
         </div>
       </main>
       <FAB />
+      <BottomNavigation />
     </div>
   );
 }

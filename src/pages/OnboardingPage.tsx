@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { HardHat, CalendarDays, FileText, ClipboardCheck, ArrowRight } from 'lucide-react';
+import { CalendarDays, FileText, ClipboardCheck, ChevronLeft } from 'lucide-react';
 
 const ONBOARDING_KEY = 'obraboa_onboarding_done';
 
@@ -13,23 +12,37 @@ const slideVariants = {
   exit: (direction: number) => ({ x: direction > 0 ? -300 : 300, opacity: 0 }),
 };
 
+/* overlay que cobre a imagem, pesado no fundo para legibilidade */
+const IMG_OVERLAY = 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.30) 40%, rgba(13,50,89,0.92) 70%, rgba(13,50,89,1) 100%)';
+
 export default function OnboardingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  const touchStartX = useRef(0);
 
   const finish = (path: string) => {
     localStorage.setItem(ONBOARDING_KEY, 'true');
     navigate(path, { replace: true });
   };
 
-  const next = () => {
-    if (step < 2) {
-      setDirection(1);
-      setStep(step + 1);
-    }
+  const next = () => { if (step < 2) { setDirection(1); setStep(step + 1); } };
+  const prev = () => { if (step > 0) { setDirection(-1); setStep(step - 1); } };
+
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const delta = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(delta) < 50) return;
+    if (delta > 0) next(); else prev();
   };
+
+  const images = [
+    '/images/campanha/reforma_08_hero.jpeg',
+    '/images/campanha/reforma_02_obra.jpeg',
+    '/images/campanha/reforma_01_planejamento.jpeg',
+  ];
+  const imgPositions = ['center center', 'center 30%', 'center 20%'];
 
   const features = [
     { icon: CalendarDays, title: t('onboarding.step2Feature1'), desc: t('onboarding.step2Feature1Desc') },
@@ -37,49 +50,64 @@ export default function OnboardingPage() {
     { icon: ClipboardCheck, title: t('onboarding.step2Feature3'), desc: t('onboarding.step2Feature3Desc') },
   ];
 
-  const steps = [
-    // Step 1
-    <div key="step1" className="flex flex-col items-center text-center gap-6 px-6">
-      <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center">
-        <HardHat className="w-12 h-12 text-accent" />
-      </div>
-      <h1 className="text-3xl font-bold text-white">{t('onboarding.step1Title')}</h1>
-      <p className="text-white/70 text-lg max-w-xs">{t('onboarding.step1Subtitle')}</p>
+  const stepContents = [
+    /* ─ Step 1: hero emocional ─ */
+    <div key="step1" className="flex flex-col gap-4">
+      <h1 className="font-bold text-white leading-tight" style={{ fontSize: '30px' }}>
+        Sua obra,{'\n'}organizada.
+      </h1>
+      <p className="text-base" style={{ color: 'rgba(255,255,255,0.80)', lineHeight: 1.5 }}>
+        Do planejamento à entrega das chaves, tudo em um só lugar.
+      </p>
     </div>,
-    // Step 2
-    <div key="step2" className="flex flex-col items-center text-center gap-6 px-6">
-      <h2 className="text-2xl font-bold text-white">{t('onboarding.step2Title')}</h2>
-      <p className="text-white/70 mb-2">{t('onboarding.step2Subtitle')}</p>
-      <div className="flex flex-col gap-4 w-full max-w-xs">
-        {features.map((f, i) => (
-          <div key={i} className="flex items-center gap-4 rounded-xl bg-white/10 p-4">
-            <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
-              <f.icon className="w-5 h-5 text-accent" />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-white text-sm">{f.title}</p>
-              <p className="text-white/60 text-xs">{f.desc}</p>
-            </div>
+
+    /* ─ Step 2: features ─ */
+    <div key="step2" className="flex flex-col gap-4 w-full max-w-xs">
+      <h2 className="font-bold text-white" style={{ fontSize: '28px' }}>
+        {t('onboarding.step2Title')}
+      </h2>
+      {features.map((f, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-4 p-4"
+          style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '16px' }}
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(245,158,11,0.20)' }}>
+            <f.icon className="w-5 h-5" style={{ color: '#F59E0B' }} />
           </div>
-        ))}
-      </div>
+          <div className="text-left">
+            <p className="font-bold text-white text-sm">{f.title}</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>{f.desc}</p>
+          </div>
+        </div>
+      ))}
     </div>,
-    // Step 3
-    <div key="step3" className="flex flex-col items-center text-center gap-6 px-6">
-      <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center">
-        <ArrowRight className="w-10 h-10 text-accent" />
-      </div>
-      <h2 className="text-2xl font-bold text-white">{t('onboarding.step3Title')}</h2>
-      <p className="text-white/70 max-w-xs">{t('onboarding.step3Subtitle')}</p>
-      <Button
-        className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90 text-base h-12"
+
+    /* ─ Step 3: CTA ─ */
+    <div key="step3" className="flex flex-col gap-4 w-full max-w-xs">
+      <h2 className="font-bold text-white" style={{ fontSize: '28px' }}>
+        {t('onboarding.step3Title')}
+      </h2>
+      <p className="text-base" style={{ color: 'rgba(255,255,255,0.80)', lineHeight: 1.5 }}>
+        {t('onboarding.step3Subtitle')}
+      </p>
+      <button
         onClick={() => finish('/signup')}
+        className="w-full font-bold text-base"
+        style={{
+          height: '56px',
+          borderRadius: '28px',
+          backgroundColor: '#F59E0B',
+          color: '#0D3259',
+          marginTop: '8px',
+        }}
       >
         {t('onboarding.createAccount')}
-      </Button>
+      </button>
       <button
-        className="text-white/60 hover:text-white text-sm underline"
         onClick={() => finish('/login')}
+        className="text-base underline"
+        style={{ color: 'rgba(255,255,255,1)', marginTop: '16px' }}
       >
         {t('onboarding.alreadyHaveAccount')}
       </button>
@@ -87,19 +115,57 @@ export default function OnboardingPage() {
   ];
 
   return (
-    <div className="fixed inset-0 flex flex-col" style={{ backgroundColor: '#1B3A5C' }}>
-      {/* Skip button */}
-      <div className="flex justify-end p-4">
+    <div
+      className="fixed inset-0 flex flex-col"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* ── Imagem de fundo fixa (não some no teclado mobile) ── */}
+      <div className="absolute inset-0">
+        <img
+          src={images[step]}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: imgPositions[step] }}
+        />
+        <div className="absolute inset-0" style={{ background: IMG_OVERLAY }} />
+      </div>
+
+      {/* ── Top bar: back + skip ── */}
+      <div className="relative z-10 flex items-center justify-between p-4">
         <button
-          className="text-white/60 hover:text-white text-sm px-3 py-1"
+          className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${step === 0 ? 'invisible' : ''}`}
+          style={{ color: 'rgba(255,255,255,0.7)' }}
+          onClick={prev}
+          aria-label="Voltar"
+        >
+          <ChevronLeft size={22} />
+        </button>
+        <button
+          className="text-sm px-3 py-1 font-medium"
+          style={{ color: 'rgba(255,255,255,0.6)' }}
           onClick={() => finish('/login')}
         >
           {t('onboarding.skip')}
         </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden">
+      {/* ── Logo no step 1 ── */}
+      {step === 0 && (
+        <div className="relative z-10 flex justify-center pt-4">
+          <img
+            src="/icon-obraboa-navy.svg"
+            alt="ObraBoa"
+            style={{ width: '200px', filter: 'brightness(0) invert(1)' }}
+          />
+        </div>
+      )}
+
+      {/* ── Espaçador ── */}
+      <div className="flex-1" />
+
+      {/* ── Conteúdo na metade inferior ── */}
+      <div className="relative z-10 px-6 pb-4">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
@@ -109,29 +175,40 @@ export default function OnboardingPage() {
             animate="center"
             exit="exit"
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="w-full"
           >
-            {steps[step]}
+            {stepContents[step]}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Bottom: dots + next */}
-      <div className="flex flex-col items-center gap-6 pb-10 px-6">
+      {/* ── Botão próximo (steps 0 e 1) ── */}
+      <div className="relative z-10 flex flex-col items-center gap-5 pb-12 px-6">
         {step < 2 && (
-          <Button
-            className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90 h-12"
+          <button
             onClick={next}
+            className="w-full max-w-xs font-bold text-base"
+            style={{
+              height: '56px',
+              borderRadius: '28px',
+              backgroundColor: '#F59E0B',
+              color: '#0D3259',
+            }}
           >
             {t('onboarding.next')}
-          </Button>
+          </button>
         )}
-        <div className="flex gap-2">
+
+        {/* Dots de progresso */}
+        <div className="flex gap-2 items-center">
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-2.5 h-2.5 rounded-full transition-colors duration-300"
-              style={{ backgroundColor: i === step ? '#F59E0B' : 'rgba(255,255,255,0.3)' }}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === step ? '8px' : '4px',
+                height: i === step ? '8px' : '4px',
+                backgroundColor: i === step ? '#F59E0B' : 'rgba(255,255,255,0.30)',
+              }}
             />
           ))}
         </div>

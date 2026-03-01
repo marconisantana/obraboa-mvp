@@ -33,8 +33,7 @@ export default function SplashPage() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center"
-          style={{ backgroundColor: '#1B3A5C' }}
+          className="fixed inset-0 flex items-center justify-center bg-primary"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}

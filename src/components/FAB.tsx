@@ -78,7 +78,7 @@ export default function FAB() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg active:scale-95 transition-transform lg:hidden"
+        className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px)+0.75rem)] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg active:scale-95 transition-transform lg:hidden"
         aria-label={t('fab.quickActions')}
       >
         <Plus size={24} />
