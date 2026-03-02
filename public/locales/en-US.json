@@ -33,6 +33,7 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "loginWithGoogle": "Sign in with Google",
+    "loginWithApple": "Sign in with Apple",
     "orContinueWith": "or continue with",
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordsMustMatch": "Passwords must match",

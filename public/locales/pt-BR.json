@@ -33,6 +33,7 @@
     "noAccount": "Não tem conta?",
     "hasAccount": "Já tem conta?",
     "loginWithGoogle": "Entrar com Google",
+    "loginWithApple": "Entrar com Apple",
     "orContinueWith": "ou continue com",
     "passwordMinLength": "A senha deve ter pelo menos 6 caracteres",
     "passwordsMustMatch": "As senhas devem ser iguais",
