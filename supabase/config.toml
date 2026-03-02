@@ -1,4 +1,6 @@
-[functions.accept-invite]
-verify_jwt = false
-
-project_id = "uyieimkvkrplvxvwatan"
+[functions]
+  [functions.accept-invite]
+    project_id = "uyieimkvkrplvxvwatan"
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
