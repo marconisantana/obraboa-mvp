@@ -37,6 +37,12 @@ export default function LoginPage() {
     });
   };
 
+  const handleAppleLogin = async () => {
+    await lovable.auth.signInWithOAuth('apple', {
+      redirect_uri: window.location.origin,
+    });
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-primary p-4">
       <div className="w-full max-w-md space-y-6">
@@ -96,6 +102,9 @@ export default function LoginPage() {
               </div>
               <Button type="button" variant="outline" className="w-full" onClick={handleGoogleLogin}>
                 {t('auth.loginWithGoogle')}
+              </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={handleAppleLogin}>
+                {t('auth.loginWithApple')}
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 {t('auth.noAccount')}{' '}

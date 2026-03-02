@@ -124,6 +124,11 @@ export default function SignupPage() {
               }}>
                 {t('auth.loginWithGoogle')}
               </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={async () => {
+                await lovable.auth.signInWithOAuth('apple', { redirect_uri: window.location.origin });
+              }}>
+                {t('auth.loginWithApple')}
+              </Button>
               <p className="text-center text-sm text-muted-foreground">
                 {t('auth.hasAccount')}{' '}
                 <Link to="/login" className="font-medium text-primary hover:underline">{t('auth.login')}</Link>
