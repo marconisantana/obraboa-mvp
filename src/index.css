@@ -154,7 +154,52 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Scroll-triggered animations */
+/* Scroll-triggered animations — v2 */
+.scroll-animate {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.scroll-animate.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger for siblings */
+.scroll-animate:nth-child(1) {
+  transition-delay: 0s;
+}
+
+.scroll-animate:nth-child(2) {
+  transition-delay: 0.12s;
+}
+
+.scroll-animate:nth-child(3) {
+  transition-delay: 0.24s;
+}
+
+.scroll-animate:nth-child(4) {
+  transition-delay: 0.36s;
+}
+
+.scroll-animate:nth-child(5) {
+  transition-delay: 0.45s;
+}
+
+.scroll-animate:nth-child(6) {
+  transition-delay: 0.54s;
+}
+
+.scroll-animate:nth-child(7) {
+  transition-delay: 0.60s;
+}
+
+.scroll-animate:nth-child(8) {
+  transition-delay: 0.66s;
+}
+
+/* Keep backward-compat alias */
 .fade-in-up {
   opacity: 0;
   transform: translateY(24px);

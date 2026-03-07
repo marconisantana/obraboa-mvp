@@ -16,8 +16,8 @@ const FEATURES: FeatureBlock[] = [
         title: 'Planeje cada etapa\ncom clareza',
         description:
             'Crie e acompanhe o cronograma completo da sua obra. Defina marcos, prazo de cada etapa e receba alertas quando uma fase estiver atrasada. Visão clara para você e para toda a equipe.',
-        image: '/images/campanha/reforma_01_planejamento.jpeg',
-        imageAlt: 'Planejamento de obra',
+        image: '/images/campanha/reforma_09_familia_negra_planejamento.jpg',
+        imageAlt: 'Família planejando a reforma',
         id: 'cronograma',
     },
     {
@@ -25,8 +25,8 @@ const FEATURES: FeatureBlock[] = [
         title: 'Controle total\ndas compras da obra',
         description:
             'Organize orçamentos, compare fornecedores e mantenha um dossiê completo de tudo que foi comprado. Nunca mais perca uma nota fiscal ou esqueça de pagar um fornecedor.',
-        image: '/images/campanha/reforma_04_escolha_materiais.jpeg',
-        imageAlt: 'Escolha de materiais',
+        image: '/images/campanha/reforma_16_loja_materiais.jpg',
+        imageAlt: 'Loja de materiais de construção',
         reverse: true,
         id: 'compras',
     },
@@ -35,8 +35,8 @@ const FEATURES: FeatureBlock[] = [
         title: 'Registre o progresso\ndia a dia',
         description:
             'Seu arquiteto ou mestre de obras registra fotos, ocorrências e resumo diário diretamente pelo app. Você acompanha tudo em tempo real, de onde estiver.',
-        image: '/images/campanha/reforma_02_obra.jpeg',
-        imageAlt: 'Obra em andamento',
+        image: '/images/campanha/reforma_12_pintando_parede.jpg',
+        imageAlt: 'Pintando parede durante a obra',
         id: 'diario',
     },
     {
@@ -44,8 +44,8 @@ const FEATURES: FeatureBlock[] = [
         title: 'Do caos ao lar\ndos sonhos',
         description:
             'Com o ObraBoa, o que era estresse vira conquista. Acompanhe cada etapa e chegue no dia da entrega das chaves com a certeza de que tudo foi feito do jeito certo.',
-        image: '/images/campanha/reforma_07_sala_familia.jpeg',
-        imageAlt: 'Resultado final — sala de família',
+        image: '/images/campanha/reforma_13_varanda_gato.jpg',
+        imageAlt: 'Resultado final — varanda com gato',
         reverse: true,
         id: 'resultado',
     },

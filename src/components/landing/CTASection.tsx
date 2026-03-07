@@ -29,7 +29,7 @@ export default function CTASection() {
                 position: 'relative',
                 padding: '120px 48px',
                 overflow: 'hidden',
-                backgroundImage: 'url(/images/campanha/reforma_03_novo_lar.jpeg)',
+                backgroundImage: 'url(/images/campanha/reforma_10_mae_pet_obra.jpg)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 textAlign: 'center',

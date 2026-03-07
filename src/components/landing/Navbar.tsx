@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -25,13 +24,12 @@ export default function Navbar() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        transition: 'all 0.3s ease',
-        backgroundColor: scrolled ? '#ffffff' : 'transparent',
-        boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.08)' : 'none',
+        transition: 'all 0.4s ease',
+        backgroundColor: scrolled ? 'rgba(13, 50, 89, 0.30)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(12px)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
+        boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.15)' : 'none',
     };
-
-    const linkColor = scrolled ? '#0D3259' : '#ffffff';
-    const logoSrc = scrolled ? '/logo-obraboa-navy.svg' : '/logo-obraboa-white.svg';
 
     const ctaStyle: React.CSSProperties = {
         padding: '10px 24px',
@@ -42,7 +40,7 @@ export default function Navbar() {
         border: scrolled ? 'none' : '1.5px solid rgba(255,255,255,0.9)',
         backgroundColor: scrolled ? '#F59E0B' : 'transparent',
         color: scrolled ? '#0D3259' : '#ffffff',
-        transition: 'all 0.3s ease',
+        transition: 'all 0.4s ease',
         textDecoration: 'none',
         whiteSpace: 'nowrap' as const,
     };
@@ -54,9 +52,9 @@ export default function Navbar() {
             {/* Logo */}
             <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
                 <img
-                    src={logoSrc}
+                    src="/logo-obraboa-white.svg"
                     alt="ObraBoa"
-                    style={{ height: '28px', transition: 'all 0.3s ease' }}
+                    style={{ height: '28px', transition: 'all 0.4s ease' }}
                 />
             </Link>
 
@@ -65,14 +63,14 @@ export default function Navbar() {
                 {links.map((link) => (
                     <a
                         key={link}
-                        href={`#${link.toLowerCase().replace(/\s+/g, '-').replace('ó', 'o').replace('ê', 'e')}`}
+                        href={`#${link.toLowerCase().replace(/\s+/g, '-')}`}
                         style={{
-                            color: linkColor,
+                            color: '#ffffff',
                             textDecoration: 'none',
                             fontSize: '14px',
                             fontWeight: 500,
-                            transition: 'all 0.3s ease',
-                            opacity: 0.9,
+                            transition: 'opacity 0.4s ease',
+                            opacity: scrolled ? 0.95 : 0.9,
                         }}
                     >
                         {link}
@@ -85,11 +83,12 @@ export default function Navbar() {
                 <Link
                     to="/login"
                     style={{
-                        color: linkColor,
+                        color: '#ffffff',
                         textDecoration: 'none',
                         fontSize: '14px',
                         fontWeight: 500,
-                        transition: 'all 0.3s ease',
+                        opacity: scrolled ? 0.95 : 0.9,
+                        transition: 'opacity 0.4s ease',
                     }}
                 >
                     Entrar
@@ -121,7 +120,7 @@ export default function Navbar() {
                             display: 'block',
                             width: '22px',
                             height: '2px',
-                            backgroundColor: scrolled ? '#0D3259' : '#ffffff',
+                            backgroundColor: '#ffffff',
                             borderRadius: '2px',
                             transition: 'all 0.3s ease',
                         }}
@@ -137,9 +136,11 @@ export default function Navbar() {
                         top: '72px',
                         left: 0,
                         right: 0,
-                        backgroundColor: '#ffffff',
+                        backgroundColor: 'rgba(13, 50, 89, 0.95)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
                         padding: '24px 32px',
-                        boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                        boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '20px',
@@ -149,15 +150,15 @@ export default function Navbar() {
                     {links.map((link) => (
                         <a
                             key={link}
-                            href={`#${link.toLowerCase()}`}
-                            style={{ color: '#0D3259', textDecoration: 'none', fontSize: '16px', fontWeight: 500 }}
+                            href={`#${link.toLowerCase().replace(/\s+/g, '-')}`}
+                            style={{ color: '#ffffff', textDecoration: 'none', fontSize: '16px', fontWeight: 500, opacity: 0.9 }}
                             onClick={() => setMobileOpen(false)}
                         >
                             {link}
                         </a>
                     ))}
-                    <hr style={{ borderColor: '#E5E7EB', margin: '4px 0' }} />
-                    <Link to="/login" style={{ color: '#0D3259', textDecoration: 'none', fontSize: '16px', fontWeight: 500 }}>
+                    <hr style={{ borderColor: 'rgba(255,255,255,0.15)', margin: '4px 0' }} />
+                    <Link to="/login" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '16px', fontWeight: 500, opacity: 0.9 }}>
                         Entrar
                     </Link>
                     <Link
