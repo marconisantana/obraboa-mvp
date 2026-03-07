@@ -17,7 +17,7 @@ export default function SplashPage() {
       setVisible(false);
       setTimeout(() => {
         if (session) {
-          navigate('/', { replace: true });
+          navigate('/home', { replace: true });
         } else if (localStorage.getItem(ONBOARDING_KEY)) {
           navigate('/login', { replace: true });
         } else {

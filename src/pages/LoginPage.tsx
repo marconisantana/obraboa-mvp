@@ -27,7 +27,7 @@ export default function LoginPage() {
     if (error) {
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      navigate('/');
+      navigate('/home');
     }
   };
 

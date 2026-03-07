@@ -41,7 +41,7 @@ export default function ResetPasswordPage() {
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
       toast({ title: t('common.success'), description: t('auth.resetPassword') });
-      navigate('/');
+      navigate('/home');
     }
   };
 
